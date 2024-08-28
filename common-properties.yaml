@@ -1,0 +1,63 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+modelVersion: 2.0
+
+properties:
+    # Microservice helm chart name
+  - helm-chart-name: eric-oss-sftp-filetrans
+    # Microservice docker image name
+  - docker-image-name: eric-oss-sftp-filetrans
+  - git-repo-path: OSS/com.ericsson.oss.adc/eric-oss-pmcounter-filetrans
+    # Arm repository URL
+  - arm-repository-url: https://arm.seli.gic.ericsson.se/artifactory
+  - fossa-team-name: "eric-oss-phoenix"
+    # gitCA repo name
+  - gitca-repo-name: eric-oss-pmcounter-filetrans
+    # product info
+  - apr-product-number: "APR201535"
+  - source-product-number: "CAV1010489"
+  - helm-product-number: "CXD101395"
+  - image-product-number: "CXU1011655"
+    # Path to YAML file containing all needed information about product structure to release in PRIM
+  - dpraf-config-file: 'ci_config/dpraf_config.yaml'
+    # Local folder where the dpraf output is generated based on dpraf-config-file during execution of adp-prim-release rule
+  - dpraf-output-dir: 'build/dpraf-output'
+    # Configuration file for EriDoc documents
+  - eridoc-config: "ci_config/eridoc_config.yaml"
+    # Static information for PRI
+  - pri-manual-input: "ci_config/pri_manual_input.json"
+    # Product extended name in JIRA
+  - jira-component-name: "Bob"
+    # Gerrit repository URL
+  - gerrit-url: "https://gerrit-gamma.gic.ericsson.se/plugins/gitiles/OSS/com.ericsson.oss.adc/eric-oss-pmcounter-filetrans/"
+    # Project Artifact ID
+  - project-artifact-id: eric-oss-sftp-filetrans
+    # CBOS image repo path
+  - cbos-image-repo: "armdocker.rnd.ericsson.se/proj-ldc/common_base_os_release"
+    # CBOS image name
+  - cbos-image-name: "sles"
+    # CBOS image version
+  - cbos-image-version: "6.17.0-11"
+    # Gerrit repository name
+  - gerrit-repo-name: OSS/com.ericsson.oss.adc/eric-oss-pmcounter-filetrans
+    # Directory where dependencies-3pp.yaml is generated or updated
+  - ci-artifacts-directory: generated/dependencies
+    # Directory where dependencies-3pp.yaml and dependencies-metadata.yaml are stored
+  - dependencies-files-folder: ci-cd/config/dependencies
+
+
+

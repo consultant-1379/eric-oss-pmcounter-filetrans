@@ -1,0 +1,715 @@
+#
+# COPYRIGHT Ericsson 2022
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "eric-oss-sftp-filetrans.fullname" . }}
+  labels:
+  {{- include "eric-oss-sftp-filetrans.labels" . | nindent 4 }}
+  annotations:
+  {{- include "eric-oss-sftp-filetrans.annotations" . | nindent 4 }}
+  {{- include "eric-oss-sftp-filetrans.prometheus" . | nindent 4 }}
+spec:
+{{- if not .Values.autoScaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+{{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "eric-oss-sftp-filetrans.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  strategy:
+    type: {{ .Values.updateStrategy.type | quote }}
+    {{- if and (eq .Values.updateStrategy.type "RollingUpdate") .Values.updateStrategy.rollingUpdate }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.updateStrategy.rollingUpdate.maxUnavailable }}
+      maxSurge: {{ .Values.updateStrategy.rollingUpdate.maxSurge }}
+    {{- end }}
+  template:
+    metadata:
+      labels:
+      {{- $labels := include "eric-oss-sftp-filetrans.labels" . | fromYaml -}}
+      {{- $meshInject := include "eric-oss-sftp-filetrans.service-mesh-inject" . | fromYaml -}}
+      {{- $directStream := include "eric-oss-sftp-filetrans.directStreamingLabel" . | fromYaml -}}
+      {{- $ism2osm := include "eric-oss-sftp-filetrans.service-mesh-ism2osm-labels" .| fromYaml -}}
+      {{- $esoaIsm2osm := include "eric-oss-sftp-filetrans.esoa-service-mesh-ism2osm-labels" .| fromYaml -}}
+      {{- $mnLabel := include "eric-oss-sftp-filetrans.eric-data-object-storage-mn-access-label" . | fromYaml -}}
+      {{- $egressLabel := include "eric-oss-sftp-filetrans.service-mesh-egress-gateway-access-label" . | fromYaml -}}
+      {{- include "eric-oss-sftp-filetrans.mergeLabels" (dict "location" .Template.Name "sources" (list $labels $meshInject $directStream $ism2osm $esoaIsm2osm $mnLabel $egressLabel)) | nindent 8 }}
+      annotations:
+      {{- $annotations := include "eric-oss-sftp-filetrans.annotations" . | fromYaml -}}
+      {{- $meshInject := include "eric-oss-sftp-filetrans.service-mesh-inject" . | fromYaml -}}
+      {{- $meshVersion := include "eric-oss-sftp-filetrans.service-mesh-version" . | fromYaml -}}
+      {{- $proxyConfig := include "eric-oss-sftp-filetrans.istio-proxy-config-annotation" . | fromYaml -}}
+      {{- $meshVolume := include "eric-oss-sftp-filetrans.service-mesh-volume" . | fromYaml -}}
+      {{- $esoaMeshVolume := include "eric-oss-sftp-filetrans.esoa-service-mesh-volume" .| fromYaml -}}
+      {{- include "eric-oss-sftp-filetrans.mergeAnnotations" (dict "location" .Template.Name "sources" (list $annotations $meshInject $meshVersion $proxyConfig $meshVolume $esoaMeshVolume)) | nindent 8 }}
+    spec:
+      {{- if include "eric-oss-sftp-filetrans.pullSecret" . }}
+      imagePullSecrets:
+        - name: {{ include "eric-oss-sftp-filetrans.pullSecret" . | quote}}
+      {{- end }}
+      serviceAccountName: {{ template "eric-oss-sftp-filetrans.fullname" . }}
+      securityContext:
+        fsGroup: {{ include "eric-oss-sftp-filetrans.fsGroup.coordinated" . }}
+        {{ include "eric-oss-sftp-filetrans.supplementalGroups" . }}
+        {{- include "eric-oss-sftp-filetrans.seccomp-profile" . | indent 8 }}
+      volumes:
+        - name: eric-data-object-storage-mn-secret-volume
+          secret:
+            optional: true
+            secretName: eric-data-object-storage-mn-secret
+        - name: eric-oss-sftp-filetrans-bdr-svc-account-secret-volume
+          secret:
+              optional: true
+              secretName: eric-oss-sftp-filetrans-bdr-svc-account-secret
+        - name: tmp-volume
+          emptyDir: { }
+        - name: "log-control-configmap-volume"
+          configMap:
+            name: {{ include "eric-oss-sftp-filetrans.log-control-configmap.name" . }}
+        - name: config-volume
+          configMap:
+            {{- if .Values.configMap }}
+              {{- if .Values.configMap.defaultMode }}
+            defaultMode: {{ .Values.configMap.defaultMode }}
+              {{- end }}
+            {{- end }}
+            name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+      containers:
+        - name: eric-oss-sftp-filetrans
+          image: {{ template "eric-oss-sftp-filetrans.mainImagePath" . }}
+          imagePullPolicy: {{ template "eric-oss-sftp-filetrans.registryImagePullPolicy" . }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - all
+            {{- include "eric-oss-sftp-filetrans.seccomp-profile" . | indent 12 }}
+          volumeMounts:
+            - name: eric-data-object-storage-mn-secret-volume
+              mountPath: /var/run/secrets
+            - name: eric-oss-sftp-filetrans-bdr-svc-account-secret-volume
+              mountPath: /var/run/secrets/sftp
+            - name: tmp-volume
+              mountPath: /tmp
+            - name: config-volume
+              mountPath: /config
+            - name: log-control-configmap-volume
+              mountPath: /logcontrol
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            {{- if (index .Values "probes" "eric-oss-sftp-filetrans" "livenessProbe" "initialDelaySeconds") }}
+            {{ print "initialDelaySeconds: " (index .Values "probes" "eric-oss-sftp-filetrans" "livenessProbe" "initialDelaySeconds") }}
+            {{- end }}
+            {{- if (index .Values "probes" "eric-oss-sftp-filetrans" "livenessProbe" "failureThreshold") }}
+            {{ print "failureThreshold: " (index .Values "probes" "eric-oss-sftp-filetrans" "livenessProbe" "failureThreshold") }}
+            {{- end }}
+            {{- if (index .Values "probes" "eric-oss-sftp-filetrans" "livenessProbe" "periodSeconds") }}
+            {{ print "periodSeconds: " (index .Values "probes" "eric-oss-sftp-filetrans" "livenessProbe" "periodSeconds") }}
+            {{- end }}
+            {{- if (index .Values "probes" "eric-oss-sftp-filetrans" "livenessProbe" "timeoutSeconds") }}
+            {{ print "timeoutSeconds: " (index .Values "probes" "eric-oss-sftp-filetrans" "livenessProbe" "timeoutSeconds") }}
+            {{- end }}
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.service.port }}
+          readinessProbe:
+            {{- if (index .Values "probes" "eric-oss-sftp-filetrans" "readinessProbe" "initialDelaySeconds") }}
+            {{ print "initialDelaySeconds: " (index .Values "probes" "eric-oss-sftp-filetrans" "readinessProbe" "initialDelaySeconds") }}
+            {{- end }}
+            {{- if (index .Values "probes" "eric-oss-sftp-filetrans" "readinessProbe" "failureThreshold") }}
+            {{ print "failureThreshold: " (index .Values "probes" "eric-oss-sftp-filetrans" "readinessProbe" "failureThreshold") }}
+            {{- end }}
+            {{- if (index .Values "probes" "eric-oss-sftp-filetrans" "readinessProbe" "periodSeconds") }}
+            {{ print "periodSeconds: " (index .Values "probes" "eric-oss-sftp-filetrans" "readinessProbe" "periodSeconds") }}
+            {{- end }}
+            {{- if (index .Values "probes" "eric-oss-sftp-filetrans" "readinessProbe" "timeoutSeconds") }}
+            {{ print "timeoutSeconds: " (index .Values "probes" "eric-oss-sftp-filetrans" "readinessProbe" "timeoutSeconds") }}
+            {{- end }}
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.service.port }}
+          env:
+          - name: SERVICE_ID
+            value: {{ include "eric-oss-sftp-filetrans.name" . | quote }}
+          - name: TZ
+            value: {{ template "eric-oss-sftp-filetrans.timezone" . }}
+          - name: BDR_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.bdr.secretname | quote }}
+                key: {{ .Values.bdr.access_key }}
+                optional: true
+          - name: BDR_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.bdr.secretname | quote }}
+                key: {{ .Values.bdr.secret_key }}
+                optional: true
+          - name: BDR_NUMBER_OF_CONNECTION_ATTEMPTS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: bdr_number_of_connection_attempts
+          - name: BDR_FILE_DELETE_RATE
+            valueFrom:
+              configMapKeyRef:
+                name: {{include "eric-oss-sftp-filetrans.name" .}}-configmap
+                key:  bdr_fileDeleteRate
+          - name: BDR_FILE_DELETE_INITIAL_DELAY
+            valueFrom:
+              configMapKeyRef:
+                name: {{include "eric-oss-sftp-filetrans.name" .}}-configmap
+                key: bdr_fileDeleteInitialDelay
+          - name: BDR_FILE_PERSISTENCE_DURATION
+            valueFrom:
+              configMapKeyRef:
+                name: {{include "eric-oss-sftp-filetrans.name" .}}-configmap
+                key: bdr_filePersistenceDuration
+          - name: BDR_RETRY_INTERVAL_MS
+            valueFrom:
+             configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: bdr_retry_interval_ms
+          - name: BDR_AVAILABILITY_RETRY_INTERVAL
+            valueFrom:
+             configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: bdr_availability_retry_interval
+          - name: BDR_SERVICE_ACCOUNT_RETRY_INTERVAL
+            valueFrom:
+              configMapKeyRef:
+                name: {{include "eric-oss-sftp-filetrans.name" .}}-configmap
+                key: bdr_service_account_retry_interval
+          - name: BDR_AVAILABILITY_RETRY_ATTEMPTS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: bdr_availability_retry_attempts
+          - name: CONNECTED_SYSTEMS_URI
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: connected_systems_uri
+          - name: CONNECTED_SYSTEMS_AVAILABILITY_RETRY_INTERVAL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: connected_systems_availability_retry_interval
+          - name: CONNECTED_SYSTEMS_AVAILABILITY_RETRY_ATTEMPTS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: connected_systems_availability_retry_attempts
+          - name: SUBSYSTEM_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: subsystem_name
+          - name: DMM_DATA_CATALOG_BASE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_base_url
+          - name: DMM_DATA_CATALOG_BASE_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_base_port
+          - name: DMM_DATA_CATALOG_FILE_FORMAT_URI
+            valueFrom:
+               configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_file_format_uri
+          - name: DMM_DATA_CATALOG_FILE_FORMAT_URI_V2
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_file_format_uri_v2
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_URI
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_uri
+          - name: DMM_DATA_CATALOG_MESSAGE_BUS_URI
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_message_bus_uri
+          - name: DMM_DATA_CATALOG_BULK_DATA_REPOSITORY_URI
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_bulk_data_repository_uri
+          - name: DMM_DATA_CATALOG_MESSAGE_BUS_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_message_bus_name
+          - name: DMM_DATA_CATALOG_MESSAGE_BUS_NAMESPACE
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_message_bus_namespace
+          - name: DMM_DATA_CATALOG_AVAILABILITY_RETRY_INTERVAL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_availability_retry_interval
+          - name: DMM_DATA_CATALOG_AVAILABILITY_RETRY_ATTEMPTS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_availability_retry_attempts
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_NAME_SUFFIX
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_name_suffix
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_DATA_SPACE_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_data_space_name
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_DATA_SERVICE_INSTANCE_CONTROL_END_POINT
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_data_service_instance_control_end_point
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_DATA_SERVICE_INSTANCE_CONSUMED_DATA_SPACE
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_data_service_instance_consumed_data_space
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_DATA_SERVICE_INSTANCE_CONSUMED_DATA_CATEGORY
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_data_service_instance_consumed_data_category
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_DATA_SERVICE_INSTANCE_CONSUMED_DATA_PROVIDER
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: subsystem_name
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_DATA_SERVICE_INSTANCE_CONSUMED_SCHEMA_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_data_service_instance_consumed_schema_name
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_DATA_SERVICE_INSTANCE_CONSUMED_SCHEMA_VERSION
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_data_service_instance_consumed_schema_version
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_DATA_CATEGORY_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_data_category_name
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_DATA_PROVIDER_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_data_provider_name
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_NOTIFICATION_TOPIC_SPECIFICATION_REFERENCE
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_notification_topic_specification_reference
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_NOTIFICATION_TOPIC_DATA_ENCODING
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_notification_topic_data_encoding
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_SUPPORTED_PREDICATE_PARAMETER_PASSED_TO_CONSUMED_SERVICE
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_supported_predicate_parameter_passed_to_consumed_service
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_SUPPORTED_PREDICATE_PARAMETER_PARAMETER_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_supported_predicate_parameter_parameter_name
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_FILE_FORMAT_SPECIFICATION_REFERENCE
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_file_format_specification_reference
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_FILE_FORMAT_ENCODING
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_file_format_encoding
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_DATATYPE_MEDIUM_TYPE
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_datatype_medium_type
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_DATATYPE_SCHEMA_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_datatype_schema_name
+          - name: DMM_DATA_CATALOG_DATA_SERVICE_DATATYPE_SCHEMA_VERSION
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: dmm_data_catalog_data_service_datatype_schema_version
+          - name: KAFKA_TOPICS_TRANSACTION_RETRY_INTERVAL_MS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_transaction_retry_interval_ms
+          - name: KAFKA_TOPICS_TRANSACTION_MAX_RETRY_ATTEMPTS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_transaction_max_retry_attempts
+          - name: KAFKA_TOPICS_INPUT_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_input_name
+          - name: KAFKA_TOPICS_OUTPUT_PARTITIONS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_output_partitions
+          - name: KAFKA_TOPICS_OUTPUT_REPLICAS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_output_replicas
+          - name: KAFKA_TOPICS_OUTPUT_COMPRESSION
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_output_compression
+          - name: KAFKA_TOPICS_OUTPUT_RETENTION
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_output_retention
+          - name: KAFKA_TOPICS_OUTPUT_BATCH_SIZE
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_output_batch_size
+          - name: KAFKA_TOPICS_OUTPUT_LINGER
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_output_linger
+          - name: KAFKA_TOPICS_OUTPUT_BUFFER_MEMORY
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_output_buffer_memory
+          - name: KAFKA_TOPICS_ENM_ID
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: subsystem_name
+          - name: KAFKA_TOPICS_CONSUMER_GROUP_ID
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_consumer_group_id
+          - name: KAFKA_TOPICS_CONSUMER_AUTO_OFFSET_RESET
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_consumer_auto_offset_reset
+          - name: KAFKA_TOPICS_PARTITION_ASSIGNMENT_STRATEGY
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_consumer_partition_assignment_strategy
+          - name: KAFKA_TOPICS_CONSUMER_MAX_POLL_RECORDS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_consumer_max_poll_records
+          - name: KAFKA_TOPICS_CONSUMER_SESSION_TIME_OUT
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_consumer_session_timeout_ms
+          - name: KAFKA_TOPICS_CONSUMER_MAX_POLL_RECONNECT_TIMEOUT
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_consumer_max_poll_reconnect_timeout_ms
+          - name: KAFKA_TOPICS_CONSUMER_MAX_POLL_INTERVAL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_consumer_max_poll_interval_ms
+          - name: KAFKA_TOPICS_CONSUMER_RETRY_BACKOFF_MS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_consumer_retry_backoff_ms
+          - name: KAFKA_TOPICS_CONSUMER_RECONNECT_BACKOFF_MS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_consumer_reconnect_backoff_ms
+          - name: KAFKA_TOPICS_CONSUMER_RECONNECT_BACKOFF_MAX_MS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_consumer_reconnect_backoff_max_ms
+          - name: KAFKA_TOPICS_CONSUMER_REQUEST_TIMEOUT_MS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_consumer_request_timeout_ms
+          - name: KAFKA_TOPICS_PRODUCER_RETRY_BACKOFF_MS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_producer_retry_backoff_ms
+          - name: KAFKA_TOPICS_PRODUCER_RECONNECT_BACKOFF_MS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_producer_reconnect_backoff_ms
+          - name: KAFKA_TOPICS_PRODUCER_RECONNECT_BACKOFF_MAX_MS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_producer_reconnect_backoff_max_ms
+          - name: KAFKA_TOPICS_PRODUCER_REQUEST_TIMEOUT_MS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_topics_producer_request_timeout_ms
+          - name: KAFKA_LISTENER_AUTO_START
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_listener_auto_start
+          - name: KAFKA_LISTENER_JMX_ENABLED
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_listener_jmx_enabled
+          - name: SPRING_KAFKA_AVAILABILITY_RETRY_INTERVAL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_availability_retry_interval
+
+          - name: SPRING_KAFKA_AVAILABILITY_RETRY_ATTEMPTS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_availability_retry_attempts
+          - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_kafka_bootstrap_servers
+          - name: SPRING_PROFILE_ACTIVE
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: spring_profile_active
+          - name: SFTP_RETRIES
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: sftp_retries
+          - name: SFTP_FILE_DOWNLOAD_RETRIES
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: sftp_file_download_retries
+          - name: SFTP_FILE_DOWNLOAD_INTERVAL_MILLIS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: sftp_file_download_interval_millis
+          - name: SFTP_SESSION_TIMEOUT
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: sftp_session_timeout_in_millis
+          - name: SFTP_BACKOFF_PERIOD_MILLIS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: sftp_backoff_period_millis
+          - name: SFTP_AVAILBILITY_RETRY_COUNT_MAX
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: sftp_availability_retry_count_max
+          - name: SFTP_AVAILBILITY_BACKOFF_TIME_IN_MS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: sftp_availability_backoff_time_in_ms
+          - name: RETRYHANDLER_BACK_OFF_PERIOD_MS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: retryhandler_back_off_period_ms
+          - name: RETRYHANDLER_MAX_NUM_OF_RETRIES
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key: retryhandler_max_num_of_retries
+          - name: MINIO_ROOT_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{.Values.bdr.minio_root_secret_name | quote}}
+                key: {{.Values.bdr.minio_root_access_key}}
+                optional: true
+          - name: MINIO_ROOT_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{.Values.bdr.minio_root_secret_name | quote}}
+                key: {{.Values.bdr.minio_root_secret_key}}
+                optional: true
+          - name: SFTP_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{.Values.bdr.secretname | quote}}
+                key: {{.Values.bdr.access_key}}
+                optional: true
+          - name: SFTP_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{.Values.bdr.secretname | quote}}
+                key: {{.Values.bdr.secret_key}}
+                optional: true
+          - name: PARSER_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{.Values.bdr.secretname | quote}}
+                key: {{.Values.bdr.parser_access_key}}
+                optional: true
+          - name: PARSER_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{.Values.bdr.secretname | quote}}
+                key: {{.Values.bdr.parser_secret_key}}
+                optional: true
+          - name: METRICS_LOG_PRINT_INTERVAL_MINS
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+                key:   metrics_log_print_interval_mins
+      {{- if .Values.global }}
+        {{- if .Values.global.security }}
+          {{- if .Values.global.security.tls }}
+            {{- if .Values.global.security.tls.enabled }}
+          - name: CONNECT_MODE
+            value: "tls"
+            {{- if (eq .Values.service.endpoints.chassisapi.tls.enforced "required") }}
+          - name: TLS_MODE
+            value: "only_tls"
+            {{- if (eq .Values.service.endpoints.chassisapi.tls.verifyClientCertificate "required") }}
+          - name: TLS_CA
+            value: "ca_path"
+            {{- end }}
+            {{- end }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- include "eric-oss-sftp-filetrans.loggingEnv" . | indent 10 }}
+          resources:
+            requests:
+            {{- if (index .Values "resources" "eric-oss-sftp-filetrans" "requests" "cpu") }}
+              cpu: {{ (index .Values "resources" "eric-oss-sftp-filetrans" "requests" "cpu" | quote) }}
+            {{- end }}
+            {{- if (index .Values "resources" "eric-oss-sftp-filetrans" "requests" "memory") }}
+              memory: {{ (index .Values "resources" "eric-oss-sftp-filetrans" "requests" "memory" | quote) }}
+            {{- end }}
+            {{- if (index .Values "resources" "eric-oss-sftp-filetrans" "requests" "ephemeral-storage") }}
+            {{ println "  ephemeral-storage:" (index .Values "resources" "eric-oss-sftp-filetrans" "requests" "ephemeral-storage" | quote) }}
+            {{- end }}
+            limits:
+            {{- if (index .Values "resources" "eric-oss-sftp-filetrans" "limits" "cpu") }}
+              cpu: {{ (index .Values "resources" "eric-oss-sftp-filetrans" "limits" "cpu" | quote) }}
+            {{- end }}
+            {{- if (index .Values "resources" "eric-oss-sftp-filetrans" "limits" "memory") }}
+              memory: {{ (index .Values "resources" "eric-oss-sftp-filetrans" "limits" "memory" | quote) }}
+            {{- end }}
+            {{- if (index .Values "resources" "eric-oss-sftp-filetrans" "limits" "ephemeral-storage") }}
+            {{ println "  ephemeral-storage:" (index .Values "resources" "eric-oss-sftp-filetrans" "limits" "ephemeral-storage" | quote) }}
+            {{- end }}
+      nodeSelector: {{ include "eric-oss-sftp-filetrans.nodeSelector" . | nindent 6 -}}
+
+      {{- if .Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds:
+        {{- include "eric-oss-sftp-filetrans.terminationGracePeriodSeconds" . | nindent 8 }}
+      {{- end }}
+      {{- if (index .Values "podPriority" "eric-oss-sftp-filetrans" "priorityClassName") }}
+      priorityClassName: {{ (index .Values "podPriority" "eric-oss-sftp-filetrans" "priorityClassName") }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- if eq .Values.affinity.podAntiAffinity "hard" }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ include "eric-oss-sftp-filetrans.name" . }}
+            topologyKey: {{ .Values.affinity.topologyKey | quote }}
+      {{- else if eq .Values.affinity.podAntiAffinity  "soft" }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - {{ include "eric-oss-sftp-filetrans.name" . }}
+              topologyKey: {{ .Values.affinity.topologyKey | quote }}
+      {{- end }}
+      {{- if .Values.podPriority }}
+        {{- if (index .Values "podPriority" "eric-oss-sftp-filetrans") }}
+          {{- if (index .Values "podPriority" "eric-oss-sftp-filetrans" "priorityClassName" ) }}
+            priorityClassName: {{ index .Values "podPriority" "eric-oss-sftp-filetrans" "priorityClassName" | quote  }}
+          {{- end }}
+        {{- end }}
+      {{- end }}

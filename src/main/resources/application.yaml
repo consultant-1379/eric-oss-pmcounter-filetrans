@@ -1,0 +1,185 @@
+---
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+#Metrics related configurations
+management.endpoint.metrics.enabled: "true"
+management.endpoints.web.exposure.include: "*"
+management.info.env.enabled: "true"
+management.endpoint.prometheus.enabled: "true"
+management.prometheus.metrics.export.enabled: "true"
+management.metrics.web.server.auto-time-requests: "true"
+
+#opentracing.jaeger.enabled: "true"
+
+endpoints.health.sensitive: "false"
+info.app.name: '@name@'
+info.app.description: Microservice chassis app
+info.app.version: '@version@'
+info.app.legal: "COPYRIGHT Ericsson 2021 -
+ The copyright to the computer program(s) herein is the property of
+ Ericsson Inc. The programs may be used and/or copied only with written
+ permission from Ericsson Inc. or in accordance with the terms and
+ conditions stipulated in the agreement/contract under which the
+ program(s) have been supplied."
+
+#See more details about pattern layout: https://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/PatternLayout.html
+#See more details about logging.pattern.level : https://docs.spring.io/spring-boot/docs/2.5.2/reference/html/features.html#features.logging.custom-log-configuration
+#logging.pattern.level: "%5p [%X{X-B3-TraceId:-},%X{X-B3-SpanId:-},%X{X-Span-Export:-}][%X{userName}]"
+
+#Set the stubrunner credentials:
+#stubrunner.username: <LAN SIGNUM ID>
+#stubrunner.password: <LAN encripted PWD or JFrog API Key>
+stubrunner.username: ${SELI_ARTIFACTORY_REPO_USER}
+stubrunner.password: ${SELI_ARTIFACTORY_REPO_PASS}
+
+connected:
+  systems:
+    uri: ${CONNECTED_SYSTEMS_URI}
+    availability:
+      retry_interval: ${CONNECTED_SYSTEMS_AVAILABILITY_RETRY_INTERVAL}
+      retry_attempts: ${CONNECTED_SYSTEMS_AVAILABILITY_RETRY_ATTEMPTS}
+
+dmm:
+  data-catalog:
+    base-url: ${DMM_DATA_CATALOG_BASE_URL}
+    base-port: ${DMM_DATA_CATALOG_BASE_PORT}
+    data-service-uri: ${DMM_DATA_CATALOG_DATA_SERVICE_URI}
+    file-format-uri: ${DMM_DATA_CATALOG_FILE_FORMAT_URI}
+    file-format-uri-v2: ${DMM_DATA_CATALOG_FILE_FORMAT_URI_V2}
+    message-bus-uri: ${DMM_DATA_CATALOG_MESSAGE_BUS_URI}
+    bulk-data-repository-uri: ${DMM_DATA_CATALOG_BULK_DATA_REPOSITORY_URI}
+    messageBusName: ${DMM_DATA_CATALOG_MESSAGE_BUS_NAME}
+    messageBusNameSpace: ${DMM_DATA_CATALOG_MESSAGE_BUS_NAMESPACE}
+    availability:
+      retry_interval: ${DMM_DATA_CATALOG_AVAILABILITY_RETRY_INTERVAL}
+      retry_attempts: ${DMM_DATA_CATALOG_AVAILABILITY_RETRY_ATTEMPTS}
+    data-service:
+      name_suffix: ${DMM_DATA_CATALOG_DATA_SERVICE_NAME_SUFFIX}
+      data-service_instance:
+        control_end_point: ${DMM_DATA_CATALOG_DATA_SERVICE_DATA_SERVICE_INSTANCE_CONTROL_END_POINT}
+        consumed_data_space: ${DMM_DATA_CATALOG_DATA_SERVICE_DATA_SERVICE_INSTANCE_CONSUMED_DATA_SPACE}
+        consumed_data_category: ${DMM_DATA_CATALOG_DATA_SERVICE_DATA_SERVICE_INSTANCE_CONSUMED_DATA_CATEGORY}
+        consumed_data_provider: ${DMM_DATA_CATALOG_DATA_SERVICE_DATA_SERVICE_INSTANCE_CONSUMED_DATA_PROVIDER}
+        consumed_schema_name:  ${DMM_DATA_CATALOG_DATA_SERVICE_DATA_SERVICE_INSTANCE_CONSUMED_SCHEMA_NAME}
+      data_category:
+        name: ${DMM_DATA_CATALOG_DATA_SERVICE_DATA_CATEGORY_NAME}
+      data_provider:
+        name: ${DMM_DATA_CATALOG_DATA_SERVICE_DATA_PROVIDER_NAME}
+        version:
+      notification_topic:
+        specification_reference: ${DMM_DATA_CATALOG_DATA_SERVICE_NOTIFICATION_TOPIC_SPECIFICATION_REFERENCE}
+        data_encoding: ${DMM_DATA_CATALOG_DATA_SERVICE_NOTIFICATION_TOPIC_DATA_ENCODING}
+      supported_predicate_parameter:
+        passed_to_consumed_service: ${DMM_DATA_CATALOG_DATA_SERVICE_SUPPORTED_PREDICATE_PARAMETER_PASSED_TO_CONSUMED_SERVICE}
+        parameter_name: ${DMM_DATA_CATALOG_DATA_SERVICE_SUPPORTED_PREDICATE_PARAMETER_PARAMETER_NAME}
+      file_format:
+        specification_reference: ${DMM_DATA_CATALOG_DATA_SERVICE_FILE_FORMAT_SPECIFICATION_REFERENCE}
+        encoding: ${DMM_DATA_CATALOG_DATA_SERVICE_FILE_FORMAT_ENCODING}
+        uri: ${DMM_DATA_CATALOG_DATA_SERVICE_FILE_FORMAT_URI}
+      datatype:
+        medium_type: ${DMM_DATA_CATALOG_DATA_SERVICE_DATATYPE_MEDIUM_TYPE}
+        schema_name: ${DMM_DATA_CATALOG_DATA_SERVICE_DATATYPE_SCHEMA_NAME}
+        schema_version: ${DMM_DATA_CATALOG_DATA_SERVICE_DATATYPE_SCHEMA_VERSION}
+
+spring:
+  profiles:
+    active: ${SPRING_PROFILE_ACTIVE}
+  kafka:
+    transaction:
+      retry-interval-ms: ${KAFKA_TOPICS_TRANSACTION_RETRY_INTERVAL_MS}
+      max-retry-attempts: ${KAFKA_TOPICS_TRANSACTION_MAX_RETRY_ATTEMPTS}
+    topics:
+      input:
+        name: ${KAFKA_TOPICS_INPUT_NAME}
+      output:
+        partitions: ${KAFKA_TOPICS_OUTPUT_PARTITIONS}
+        replicas: ${KAFKA_TOPICS_OUTPUT_REPLICAS}
+        compression: ${KAFKA_TOPICS_OUTPUT_COMPRESSION}
+        retention: ${KAFKA_TOPICS_OUTPUT_RETENTION}
+        batch-size: ${KAFKA_TOPICS_OUTPUT_BATCH_SIZE}
+        linger: ${KAFKA_TOPICS_OUTPUT_LINGER}
+        buffer-memory: ${KAFKA_TOPICS_OUTPUT_BUFFER_MEMORY}
+      enm_id: ${KAFKA_TOPICS_ENM_ID}
+    availability:
+      retry_interval: ${SPRING_KAFKA_AVAILABILITY_RETRY_INTERVAL}
+      retry_attempts: ${SPRING_KAFKA_AVAILABILITY_RETRY_ATTEMPTS}
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      retry-backoff-ms: ${KAFKA_TOPICS_PRODUCER_RETRY_BACKOFF_MS}
+      reconnect-backoff-ms: ${KAFKA_TOPICS_PRODUCER_RECONNECT_BACKOFF_MS}
+      reconnect-backoff-max-ms: ${KAFKA_TOPICS_PRODUCER_RECONNECT_BACKOFF_MAX_MS}
+      request-timeout-ms: ${KAFKA_TOPICS_PRODUCER_REQUEST_TIMEOUT_MS}
+    consumer:
+      group-id: ${KAFKA_TOPICS_CONSUMER_GROUP_ID}
+      auto-offset-reset: ${KAFKA_TOPICS_CONSUMER_AUTO_OFFSET_RESET}
+      partition-assignment-strategy : ${KAFKA_TOPICS_PARTITION_ASSIGNMENT_STRATEGY}
+      max-poll-records : ${KAFKA_TOPICS_CONSUMER_MAX_POLL_RECORDS}
+      session-timeout-ms: ${KAFKA_TOPICS_CONSUMER_SESSION_TIME_OUT}
+      max-poll-reconnect-timeout-ms: ${KAFKA_TOPICS_CONSUMER_MAX_POLL_RECONNECT_TIMEOUT}
+      max-poll-interval-ms : ${KAFKA_TOPICS_CONSUMER_MAX_POLL_INTERVAL}
+      retry-backoff-ms: ${KAFKA_TOPICS_CONSUMER_RETRY_BACKOFF_MS}
+      reconnect-backoff-ms: ${KAFKA_TOPICS_CONSUMER_RECONNECT_BACKOFF_MS}
+      reconnect-backoff-max-ms: ${KAFKA_TOPICS_CONSUMER_RECONNECT_BACKOFF_MAX_MS}
+      request-timeout-ms: ${KAFKA_TOPICS_CONSUMER_REQUEST_TIMEOUT_MS}
+
+    auto:
+      start: ${KAFKA_LISTENER_AUTO_START}
+  jmx:
+    enabled: ${KAFKA_LISTENER_JMX_ENABLED}
+
+sftp:
+  retries: ${SFTP_RETRIES}
+  file-download-retries: ${SFTP_FILE_DOWNLOAD_RETRIES}
+  file-download-interval-millis: ${SFTP_FILE_DOWNLOAD_INTERVAL_MILLIS}
+  session-timeout-in-millis: ${SFTP_SESSION_TIMEOUT}
+  backoff-period-in-millis: ${SFTP_BACKOFF_PERIOD_MILLIS}
+  availability:
+    retryCountMax: ${SFTP_AVAILBILITY_RETRY_COUNT_MAX}
+    backoffTimeInMs: ${SFTP_AVAILBILITY_BACKOFF_TIME_IN_MS}
+
+bdr:
+  accesskey: ${BDR_ACCESS_KEY}
+  secretkey: ${BDR_SECRET_KEY}
+  numberOfConnectionAttempts: ${BDR_NUMBER_OF_CONNECTION_ATTEMPTS}
+  retryIntervalMs: ${BDR_RETRY_INTERVAL_MS}
+  availability:
+    retry_interval: ${BDR_AVAILABILITY_RETRY_INTERVAL}
+    retry_attempts: ${BDR_AVAILABILITY_RETRY_ATTEMPTS}
+  fileDeleteRate: ${BDR_FILE_DELETE_RATE}
+  fileDeleteInitialDelay: ${BDR_FILE_DELETE_INITIAL_DELAY}
+  filePersistenceDuration: ${BDR_FILE_PERSISTENCE_DURATION}
+
+subsystem:
+  name: ${SUBSYSTEM_NAME}
+
+retryhandler:
+  back_off_period_ms: ${RETRYHANDLER_BACK_OFF_PERIOD_MS}
+  max_num_of_retries: ${RETRYHANDLER_MAX_NUM_OF_RETRIES}
+
+retryable:
+  kafka-topic:
+    max-attempts: 3
+    delay: 3000
+
+metrics:
+  log:
+    print-interval-mins: ${METRICS_LOG_PRINT_INTERVAL_MINS}
+
+ericsson:
+  logging:
+    runtime-level-control:
+      enabled: ${RUN_TIME_LEVEL_CONTROL:false}

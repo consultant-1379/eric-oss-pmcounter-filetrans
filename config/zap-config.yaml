@@ -1,0 +1,55 @@
+#
+# COPYRIGHT Ericsson 2022
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+zapConfig:
+  baseUrl: "http://eric-oss-sftp-filetrans:8080"
+  scanType: "full"
+  config_dir: "config"
+  globalConfig:
+    - id: "10036"
+      action: "IGNORE"
+      message: "Server Leaks Version Information via Server HTTP Response Header Field"
+    - id: "100001"
+      action: "IGNORE"
+      message: "Actuator content type is not controlled by the microservice"
+    - id: "10021"
+      action: "IGNORE"
+      message: "Actuator headers are not controlled by the microservice"
+  endpoints: # These are unstable for some reason, might have to do them individually and extract reports with kubectl cp <POD>:/zap/wrk/ ./
+    - name: "sftp-filetrans-actuator"
+      url: "/actuator"
+      config:
+    - name: "sftp-filetrans-actuator-health"
+      url: "/actuator/health"
+      config:
+    - name: "sftp-filetrans-actuator-info"
+      url: "/actuator/info"
+      config:
+    - name: "sftp-filetrans-actuator-prometheus"
+      url: "/actuator/prometheus"
+      config:
+        - id: "10096"
+          action: "IGNORE"
+          message: "Time stamps have to be exposed here"
+  report:
+    dir: "build/va-reports/zap_report"
+    format:
+      - html
+      - json
+      - xml
+      - md
+  properties:
+    zap_container_port: 4040

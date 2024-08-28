@@ -1,0 +1,33 @@
+#
+# COPYRIGHT Ericsson 2022
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+documents:
+  # document name
+  - name: user_guide
+    # file names of files to be packaged in the document
+    files:
+      - ../doc/User_Guide/user_guide.md
+      - ../doc/User_Guide/SFTPFileTransferService_architecture_overview.PNG
+      - ../doc/User_Guide/UserGuide_SFTPFileTransfer_DeploymentView.png
+      - ../doc/User_Guide/Startup_External_Dependency_Checks.png
+  - name: test-specification
+    files:
+      - ../doc/Test_Specification/test-specification.md
+  - name: developers_guide
+    files:
+      - ../doc/Application_Developers_Guide/Application_Developers_Guide.md
+  - name: PRI
+    files:
+      - ../doc/PRI_DOC/eric-oss-sftp-filetrans-PRI.md

@@ -1,0 +1,13 @@
+stage-marker-init:
+  - name: custom_stages/lint.Jenkinsfile
+stage-marker-image:
+  - name: custom_stages/image.Jenkinsfile
+  - name: custom_stages/cbos.Jenkinsfile
+stage-marker-helm:
+  - name: custom_stages/helm_install.Jenkinsfile
+  - name: custom_stages/publish.Jenkinsfile
+stage-marker-package:
+  - name: custom_stages/mimer.Jenkinsfile
+  - name: custom_stages/generate.Jenkinsfile
+  - name: custom_stages/marketplace_upload.Jenkinsfile
+

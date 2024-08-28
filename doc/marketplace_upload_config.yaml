@@ -1,0 +1,39 @@
+#
+# COPYRIGHT Ericsson 2022
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+documents:
+  - name: "Service User Guide"
+    filepath: build/doc-marketplace/UserGuide.zip
+    default: true
+  - name: "Application Developers Guide"
+    filepath: build/doc-marketplace/developers-guide.zip
+  - name: Inner Source README
+    filepath: build/doc-marketplace/ReadMe.zip
+  - name: Contributing Guideline
+    filepath: build/doc-marketplace/Contributing.zip
+  - name: "Test Specification"
+    filepath: build/doc-marketplace/test-specification.zip
+  - name: "Test Report"
+    filepath: build/doc-marketplace/test-report.zip
+  - name: "Product Revision Information (PRI)"
+    filepath: build/doc-marketplace/pri.zip
+#  - name: "Risk Assessment & Privacy Impact Assessment"
+#    filepath: build/doc-marketplace/RA_PIA.zip
+#  - name: "Vulnerability Analysis Report"
+#    filepath: build/doc-marketplace/VA-report.zip
+#  - name: "Service Vendor List (SVL)"
+#    filepath: build/doc-svl-replacement/svl.zip
+  # - name: "Characteristics Report"
+  #   filepath: build/doc-marketplace/characteristics-report.zip

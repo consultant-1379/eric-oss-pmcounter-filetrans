@@ -1,0 +1,366 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+# Default values for eric-oss-sftp-filetrans.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+#global:
+#  timezone: UTC
+#  registry:
+#    url: armdocker.rnd.ericsson.se
+#    imagePullPolicy: IfNotPresent
+#    repoPath:
+#  #Secret must be manually created in the namespace, no default value
+#  pullSecret: eric-adp-example-secret
+#  fsGroup:
+#    manual: 10000
+#    namespace: true
+#  # The IP family the service belongs to when service.type is set to ClusterIP.
+#  # Options are: IPv4, IPv6
+#  internalIPFamily:
+#  security:
+#    policyBinding:
+#      create: true
+#    policyReferenceMap:
+#      default-restricted-security-policy: "<restricted security policy at customer deployment>"
+#    tls:
+#      enabled: true
+#
+#  # Configuring global streamingMethod: indirect, direct, dual. default=direct
+#  log:
+#    streamingMethod: "direct"
+#  # When the global ID for supplementalGroups is set, and both global and local values are provided,
+#  # the global values are combined with the local values. If no local settings are given, the global values will be used as-is.
+#  podSecurityContext:
+#    supplementalGroups: null #{value='0...max'}{default=null}
+
+#TODO: Enable the tls security when solution is implemented
+security:
+  tls:
+    enabled: false
+
+replicaCount: 2
+
+podDisruptionBudget:
+  # Minimum number/percentage of Pods that must remain available during the planned disruption.
+  # Value can be expressed as an integer or as a percentage. When specified as a percentage of the Pods,
+  # if it does not map to an exact number, Kubernetes rounds up to the nearest integer.
+  # minAvailable: 2 # example value for 2 pods defined as integer
+  minAvailable: "40%"
+
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+#Empty labels list for application deployment engineer to add more labels (In Compliance with DR-D1121-068).
+labels: { }
+
+imageCredentials:
+  eric-oss-sftp-filetrans:
+    repoPath: # see default in eric-product-info.yaml
+    registry: { }
+      # overrides global registry url
+      # url:
+      #- Secret must be manually created in the namespace, no default value
+    # pullSecret: REPO_SECRET
+
+imagePullSecrets: [ ]
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: { }
+
+annotations: { }
+
+service:
+  type: ClusterIP
+  port: 8080
+  endpoints:
+    chassisapi:
+      tls:
+        enforced: required
+        verifyClientCertificate: required
+
+ingress:
+  enabled: false
+  ingressClass: OAM-IngressClass
+  hosts:
+    - host: chart-example.local
+      paths: [ / ]
+
+  tls: [ ]
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+eric-pm-server:
+  rbac:
+    appMonitoring:
+      enabled: true
+
+prometheus:
+  path: /actuator/prometheus
+  scrape: true
+
+terminationGracePeriodSeconds: 30
+
+  # limits.ephemeral-storage   - 1G assumes worst case. Calculation: 10000*4*24 files = 960000 and files at 10kb
+resources:
+  eric-oss-sftp-filetrans:
+    requests:
+      memory: 256Mi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+    jvm:
+      initialMemoryAllocationPercentage: 65
+      smallMemoryAllocationMaxPercentage: 70
+      largeMemoryAllocationMaxPercentage: 65
+  eric-oss-sftp-filetrans-hooks:
+    requests:
+      memory: 25Mi
+      cpu: 100m
+      ephemeral-storage: 25Mi
+    limits:
+      memory: 25Mi
+      cpu: 125m
+      ephemeral-storage: 25Mi
+
+sftp:
+  retries: 3
+  file_download_retries: 3
+  file_download_interval_millis: 1000
+  session_timeout_in_millis: 15000
+  backoff_period_in_millis: 1000
+  availability:
+    retryCountMax: "2147483647"
+    backoffTimeInMs: 1000
+bdr:
+  sipTlsCertificateIssuerReference: "eric-data-object-storage-mn-ca"
+  secretname: "eric-oss-sftp-filetrans-bdr-svc-account-secret"
+  access_key: "sftp-bdr-access-key"
+  secret_key: "sftp-bdr-secret-key"
+  parser_access_key: "parser-bdr-access-key"
+  parser_secret_key: "parser-bdr-secret-key"
+  minio_root_secret_name: "eric-data-object-storage-mn-secret"
+  minio_root_access_key: "accesskey"
+  minio_root_secret_key: "secretkey"
+  service_account_retry_interval: 10
+  number_of_connection_attempts: 3
+  retry_interval_ms: 1000
+  availability:
+    retry_interval: 1000
+    retry_attempts: "2147483647"
+  fileDeleteRate: 900000
+  fileDeleteInitialDelay: 300000
+  filePersistenceDuration: "3600000"
+
+autoScaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+topologySpreadConstraints: []
+
+tolerations: []
+
+affinity:
+  podAntiAffinity: "soft"
+  topologyKey: "kubernetes.io/hostname"
+
+podPriority:
+  eric-oss-sftp-filetrans:
+    priorityClassName: ""
+
+# choice='unconfined, runtime/default, localhost' [ default= ""]
+# Configuration of AppArmor profile type. The following values are possible:
+# unconfined  - Indicates that there is no profile loaded.
+# runtime/default - Applies the default profile of the container engine.
+# localhost   - Applies a specific profile loaded on the host
+appArmorProfile:
+  type: ""
+  localhostProfile:
+
+seccompProfile:
+      type: "RuntimeDefault"
+
+probes:
+  eric-oss-sftp-filetrans:
+    livenessProbe:
+      failureThreshold: 10
+      initialDelaySeconds: 180
+      periodSeconds: 10
+      timeoutSeconds: 10
+    readinessProbe:
+      failureThreshold: 10
+      initialDelaySeconds: 180
+      periodSeconds: 10
+      timeoutSeconds: 10
+
+configMap:
+  defaultMode: 493 # default permissions for the configmap in decimal format (493 translates to 0755 in octal)
+
+connected:
+  systems:
+    uri: "/subsystem-manager/v1/subsystems/"
+    availability:
+      retry_interval: 20000  # value in ms
+      retry_attempts: "2147483647"  # Equivalent to Integer.MAX_VALUE
+
+dmm:
+  data_catalog:
+    base_url: "http://eric-oss-data-catalog:"
+    base_port: "9590"
+    data_service_uri: "/catalog/v1/data-service"
+    file_format_uri: "/catalog/v1/file-format/"
+    file_format_uri_v2: "/catalog/v2/file-format/"
+    message_bus_uri: "/catalog/v1/message-bus/"
+    bulk_data_repository_uri: "/catalog/v1/bulk-data-repository/"
+    message_bus_name: "eric-oss-dmm-kf-op-sz-kafka-bootstrap"
+    availability:
+      retry_interval: 1000  # value in ms
+      retry_attempts: "2147483647"  # Equivalent to Integer.MAX_VALUE
+    data_service:
+      name_suffix: "pm-counter-sftp-file-transfer"
+      data_space:
+        name: "4G5G"
+      data_service_instance:
+        control_end_point: ""
+        consumed_data_space: ""
+        consumed_data_category: "PM_COUNTERS"
+        consumed_schema_name: "FLS"
+        consumed_schema_version: "1"
+      data_category:
+        name: "PM_COUNTERS"
+      data_provider:
+        name: "enmFileNotificationService"
+      notification_topic:
+        specification_reference: ""
+        data_encoding: "JSON"
+      supported_predicate_parameter:
+        passed_to_consumed_service: true
+        parameter_name: "nodeName"
+      file_format:
+        specification_reference: ""
+        encoding: "XML"
+      datatype:
+        medium_type: "file"
+        schema_name: "ran"
+        schema_version: "1"
+
+ism2osm:
+  outMeshService:
+    ericEsoaSubsystemManagement:
+      enabled: false
+      sipTlsCertificateIssuerReference: ""
+
+spring:
+  profiles:
+    active: "production"
+  kafka:
+    clusterName: "eric-oss-dmm-kf-op-sz"
+    transaction:
+      retry_interval_ms: 1000
+      max_retry_attempts: -1 # -1 means transaction rollbacks are disabled.
+    topics:
+      input:
+        name: "file-notification-service--sftp-filetrans--"
+      output:
+        partitions: 36
+        replicas: 3
+        compression: "lz4"
+        retention: "3600000"
+        batch_size: "16384"
+        linger: 10
+        buffer_memory: "33554432"
+    availability:
+      retry_interval: 10000  # value in ms
+      retry_attempts: "2147483647"  # Equivalent to Integer.MAX_VALUE
+    bootstrap_servers: "eric-oss-dmm-kf-op-sz-kafka-bootstrap:9092"
+    bootstrapServersTls: "eric-oss-dmm-kf-op-sz-kafka-bootstrap:9093"
+    issuerReference: "eric-oss-dmm-kf-op-sz-clients-ca-cert"
+    producer:
+      retry_backoff_ms: 100
+      reconnect_backoff_ms: 50
+      reconnect_backoff_max_ms: 30000 # custom value, default Kafka 1000
+      request_timeout_ms: 30000
+
+    consumer:
+      group_id: "sftp-filetrans-consumer-group"
+      auto_offset_reset: "earliest"
+      partition_assignment_strategy: "org.apache.kafka.clients.consumer.CooperativeStickyAssignor"
+      max_poll_records: 20
+      session_timeout_ms: 30000
+      max_poll_reconnect_timeout_ms: 30000
+      max_poll_interval_ms: 300000
+      retry_backoff_ms: 100
+      reconnect_backoff_ms: 50
+      reconnect_backoff_max_ms: 30000 # custom value, default Kafka 1000
+      request_timeout_ms: 30000
+
+    auto:
+      start: false
+    jmx:
+      enabled: true
+
+subsystem:
+  name: "enm1"
+
+retryhandler:
+  back_off_period_ms: 5000
+  max_num_of_retries: "2147483647"
+
+networkPolicy:
+  enabled: true
+
+metrics:
+  log:
+    print_interval_mins: "15"
+
+# Pod priority configuration for deployments
+podPriority:
+  eric-oss-sftp-filetrans:
+    priorityClassName: ""
+
+# local streamingMethod
+log:
+  streamingMethod: dual
+  logLevel: INFO
+  logControlFile: /logcontrol/logcontrol.json
+  runtime-level-control:
+    enabled: true
+
+# A set of local supplementalGroups values for use when fsGroup is not supported
+podSecurityContext:
+  supplementalGroups: null #{value='0...max'}{default=null}
+
+# role binding (DR D1123-134)
+securityPolicy:
+  rolename: "eric-oss-sftp-filetrans"

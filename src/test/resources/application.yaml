@@ -1,0 +1,189 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+#Metrics related configurations
+management.endpoint.metrics.enabled: "true"
+management.endpoints.web.exposure.include: "*"
+management.info.env.enabled: "true"
+management.endpoint.prometheus.enabled: "true"
+management.prometheus.metrics.export.enabled: "true"
+management.metrics.web.server.auto-time-requests: "true"
+
+#opentracing.jaeger.enabled: "true"
+
+endpoints.health.sensitive: "false"
+info.app.name: '@name@'
+info.app.description: Microservice chassis app
+info.app.version: '@version@'
+info.app.legal: "COPYRIGHT Ericsson 2021 -
+ The copyright to the computer program(s) herein is the property of
+ Ericsson Inc. The programs may be used and/or copied only with written
+ permission from Ericsson Inc. or in accordance with the terms and
+ conditions stipulated in the agreement/contract under which the
+ program(s) have been supplied."
+
+#See more details about pattern layout: https://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/PatternLayout.html
+#See more details about logging.pattern.level : https://docs.spring.io/spring-boot/docs/2.5.2/reference/html/features.html#features.logging.custom-log-configuration
+#logging.pattern.level: "%5p [%X{X-B3-TraceId:-},%X{X-B3-SpanId:-},%X{X-Span-Export:-}][%X{userName}]"
+
+#Set the stubrunner credentials:
+#stubrunner.username: <LAN SIGNUM ID>
+#stubrunner.password: <LAN encripted PWD or JFrog API Key>
+stubrunner.username: ${SELI_ARTIFACTORY_REPO_USER}
+stubrunner.password: ${SELI_ARTIFACTORY_REPO_PASS}
+
+connected:
+  systems:
+    base_url: "http://eric-eo-subsystem-management/"
+    uri: "subsystem-manager/v1/subsystems/"
+    availability:
+      retry_interval: 1000 # value in ms
+      retry_attempts: 3 # Equivalent to Integer.MAX_VALUE in prod, 3 for tests
+
+dmm:
+  data-catalog:
+    base-url: "http://localhost:"
+    base-port: "9590"
+    data_service_uri: "/catalog/v1/data-service"
+    file-format-uri: "/catalog/v1/file-format"
+    file-format-uri-v2: "/catalog/v2/file-format"
+    message-bus-uri: "/catalog/v1/message-bus"
+    message-bus-name: "null"
+    message-bus-namespace: "null"
+    bulk-data-repository-uri: "/catalog/v1/bulk-data-repository/"
+    availability:
+      retry_interval: 1000 # value in ms
+      retry_attempts: 3 # Equivalent to Integer.MAX_VALUE in prod, 3 for tests
+    data-service:
+      name_suffix: "pm-counter-sftp-file-transfer"
+      data_space:
+        name: ""
+      data-service_instance:
+        name: ""
+        control_end_point: " "
+        consumed_data_space: ""
+        consumed_data_category: "PM_COUNTERS"
+        consumed_data_provider: "enm1"
+        consumed_schema_name: "FLS"
+      data_category:
+        name: "PM_COUNTERS"
+      data_provider:
+        name: "enmFileNotificationService"
+        version: ""
+      notification_topic:
+        specification_reference: ""
+        data_encoding: "JSON"
+      supported_predicate_parameter:
+        passed_to_consumed_service: "false"
+        parameter_name: "nodeName"
+      file_format:
+        specification_reference: ""
+        encoding: "XML"
+      datatype:
+        medium_type: "file"
+        schema_name: "ran"
+        schema_version: "1"
+
+spring:
+  kafka:
+    transaction:
+      retry-interval-ms: 1000
+      max-retry-attempts: 2
+    topics:
+      input:
+        name: "file-notification-service--sftp-filetrans--"
+      output:
+        name: "sftp-filetrans--"
+        partitions: 3
+        replicas: ${KAFKA_TOPICS_OUTPUT_REPLICAS:1} # default value of 1 when no env vars found
+        compression: "lz4"
+        retention: "86400000"
+        batch-size: ${KAFKA_TOPICS_OUTPUT_BATCH_SIZE:16384}
+        linger: ${KAFKA_TOPICS_OUTPUT_LINGER:10}
+        buffer-memory: ${KAFKA_TOPICS_OUTPUT_BUFFER_MEMORY:33554432}
+      enm_id: "enm1"
+    producer:
+      retry-backoff-ms: 100
+      reconnect-backoff-ms: 50
+      reconnect-backoff-max-ms: 30000 # custom value, default Kafka 1000
+      request-timeout-ms: 30000
+    consumer:
+      group-id: "ericsson"
+      auto-offset-reset: "earliest"
+      partition-assignment-strategy : "org.apache.kafka.clients.consumer.RangeAssignor"
+      max-poll-records : 5
+      session-timeout-ms: 60000
+      max-poll-reconnect-timeout-ms: 30000
+      max-poll-interval-ms: 60000
+      retry-backoff-ms: 100
+      reconnect-backoff-ms: 50
+      reconnect-backoff-max-ms: 30000 # custom value, default Kafka 1000
+      request-timeout-ms: 30000
+
+    bootstrap-servers: ${spring.embedded.kafka.brokers}
+    auto:
+      start: true
+    availability:
+      retry_interval: 1000 # value in ms
+      retry_attempts: 3 # Equivalent to Integer.MAX_VALUE in prod, 3 for tests
+  profiles:
+    active: test
+  main:
+    allow-bean-definition-overriding: true # required to use @TestConfiguration annotation
+
+sftp:
+  retries: 3
+  file-download-retries: 3
+  file-download-interval-millis: 1000
+  session-timeout-in-millis: 15000
+  backoff-period-in-millis: 1000
+  availability:
+    retryCountMax: 2
+    backoffTimeInMs: 1500
+
+bdr:
+  hostname: "http://eric-data-object-storage-mn:9000"
+  name: "testingbdr"
+  accesskey: "AKIAIOSFODNN7EXAMPLE"
+  secretkey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+  numberOfConnectionAttempts: 3
+  retryIntervalMs: 10000
+  availability:
+    retry_interval: 1000  # value in ms
+    retry_attempts: 3
+  fileDeleteRate: 500
+  fileDeleteInitialDelay: 1000
+  filePersistenceDuration: 50
+
+subsystem:
+  name: "enm1"
+
+retryhandler:
+  back_off_period_ms: 1000
+  max_num_of_retries: 3
+
+metrics:
+  log:
+    print-interval-mins: "15"
+
+logging:
+  level:
+    root: INFO
+
+retryable:
+  kafka-topic:
+    max-attempts: 3
+    delay: 3000

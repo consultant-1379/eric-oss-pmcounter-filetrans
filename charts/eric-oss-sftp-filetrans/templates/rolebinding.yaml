@@ -1,0 +1,60 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+{{- if (include "eric-oss-sftp-filetrans.securityPolicyRoleKind" . ) }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "eric-oss-sftp-filetrans.securityPolicy.rolebindingName" . }}
+  labels:
+    {{- include "eric-oss-sftp-filetrans.labels" . | nindent 4 }}
+  annotations:
+    {{- include "eric-oss-sftp-filetrans.annotations" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: {{ include "eric-oss-sftp-filetrans.securityPolicyRoleKind" . }}
+  name: {{ include "eric-oss-sftp-filetrans.securityPolicyRolename" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "eric-oss-sftp-filetrans.fullname" . }}
+{{- else -}}
+  {{- if .Values.global -}}
+    {{- if .Values.global.security -}}
+      {{- if .Values.global.security.policyBinding -}}
+        {{- if .Values.global.security.policyBinding.create -}}
+          {{- if eq $.Values.global.security.policyBinding.create true }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "eric-oss-sftp-filetrans.name" . }}-security-policy
+  labels:
+  {{- include "eric-oss-sftp-filetrans.labels" . | nindent 4 }}
+  annotations:
+  {{- include "eric-oss-sftp-filetrans.securityPolicy.annotations" . | nindent 4 }}
+  {{- include "eric-oss-sftp-filetrans.annotations" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "eric-oss-sftp-filetrans.securityPolicy.reference" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "eric-oss-sftp-filetrans.name" . }}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}

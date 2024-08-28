@@ -1,0 +1,90 @@
+#
+# COPYRIGHT Ericsson 2022
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+modelVersion: "2.0"
+flavor: "Generic"
+service:
+  # name of the service:
+  name: "SFTP File Transfer"
+  # Design Country (set on the source products)
+  design_countries:
+   - IE                 # Ireland
+  # Compilation Country (Set on the derivative products)
+  sw_compilation_country: SE
+  # Release responsible
+  release_responsible: BCSDBECH
+  #  Design responsible
+  design_responsible: BCSDBECH
+  # using "Completed" when encryption is not changed compared to previous released version.
+  #  encryption_status: "Completed"
+  # Bookmarks
+  #  bookmark: PRIM
+  # The documents is optional if all eridoc document revisions are set
+  # documents:
+    # Read documents revisions from this file
+    # Use munin-adp generate-pri-input and pri.py to generate the file
+    # Relative file path to product_structure.yaml
+  #    import: ../build/documents.yaml                                                # Part of Documentation side
+  # Details of the APR product structure:
+  top_product:
+    alias: ["eric-oss-sftp-filetrans"]
+    # APR Product Number
+    number: APR 201 535
+    # Description
+    description: "The SFTP File Transfer Service receives Kafka notifications. The files are transferred and persisted to the Bulk Data Repository (BDR). The messages containing the location of the files in BDR are written onto a Kafka output topic to be consumed by other services."
+    # Includes
+    includes:
+        # SUSE Licenses
+      - prim: 1/FAL 115 3215
+        rstate: R1A
+      - prim: 3/FAL 115 3215
+        rstate: R1A
+      - prim: 5/FAL 115 3215
+        rstate: R1A
+      - prim: 7/FAL 115 3215
+        rstate: R1A
+  # Details of the Source product structure
+  src_products:
+  # Source Code Product
+    - label: Source
+      number: CAV 101 0489
+  # Details of zero or more derivative product structures, use [] for zero
+  derivative_products:
+  # Label describing the product, must be unique per list item
+    - label: "HELM"
+      number: "CXD 101 395"
+      alias: ["eric-oss-sftp-filetrans"]
+      derivedFrom:
+        munin: CAV 101 0489
+    - label: "IMAGE"
+      number: "CXU 101 1655"
+      description: "SFTP File Transfer"
+      includes:
+        # Common Base OS
+        - munin: CXC 201 2032
+          version: CBOS_VERSION
+          secondPartyProduct: "True"
+        # Common Base OS Repo
+        - munin: CXC 201 2031
+          version: CBOS_VERSION
+          secondPartyProduct: "True"
+#      uses_foss:
+#        - dependencies_file: dependencies.yaml                      #  Dependencies YAML
+#        - foss_usage: foss.usage.yaml                               #  FOSS Usage YAML
+#      uses_encryption:
+#        - import: encryptions.yaml                                  #  ENCRYPTIONS YAML
+      derivedFrom:
+        munin: CAV 101 0489

@@ -1,0 +1,56 @@
+{{- $serviceMesh := include "eric-oss-sftp-filetrans.service-mesh-enabled" . | trim -}}
+{{- if .Values.global -}}
+  {{- if and .Values.global.networkPolicy .Values.networkPolicy -}}
+    {{- if and .Values.global.networkPolicy.enabled .Values.networkPolicy.enabled -}}
+#
+# COPYRIGHT Ericsson 2022
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ include "eric-oss-sftp-filetrans.name" . }}-limit-internal-traffic
+  labels:
+  {{- include "eric-oss-sftp-filetrans.labels" . | nindent 4 }}
+  annotations:
+  {{- include "eric-oss-sftp-filetrans.prometheus" . | nindent 4 }}
+  {{- include "eric-oss-sftp-filetrans.annotations" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "eric-oss-sftp-filetrans.name" . }}
+  policyTypes:
+  - Ingress
+  - Egress
+  egress:
+  - {}
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: eric-pm-server
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: {{ include "eric-oss-sftp-filetrans.name" . }}
+    ports:
+    - port: 8080
+      protocol: TCP
+{{- if (eq $serviceMesh "true")}}
+    - port: 15090
+      protocol: TCP
+{{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}

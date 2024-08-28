@@ -1,0 +1,38 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+---
+{{- if .Values.global -}}
+  {{- if .Values.global.security -}}
+    {{- if .Values.global.security.privilegedPolicyClusterRoleName -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "eric-oss-sftp-filetrans.name" . }}-psp-binding
+  labels:
+  {{- include "eric-oss-sftp-filetrans.labels" . | nindent 4 }}
+  annotations:
+  {{- include "eric-oss-sftp-filetrans.annotations" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Values.global.security.privilegedPolicyClusterRoleName }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "eric-oss-sftp-filetrans.fullname" . }}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}

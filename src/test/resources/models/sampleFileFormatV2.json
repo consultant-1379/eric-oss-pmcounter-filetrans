@@ -1,0 +1,53 @@
+{
+  "dataSpace": {
+    "name": "5G"
+  },
+  "dataService": {
+    "dataServiceName": "dsName"
+  },
+  "dataServiceInstance": {
+    "dataServiceInstanceName": "dsinstance",
+    "controlEndPoint": "http://localhost:8080",
+    "consumedDataSpace": "5G",
+    "consumedDataCategory": "5G",
+    "consumedDataProvider": "5G",
+    "consumedSchemaName": "SCHm",
+    "consumedSchemaVersion": "1"
+  },
+  "supportedPredicateParameter": {
+    "isPassedToConsumedService": false,
+    "parameterName": "pname"
+  },
+  "dataCategory": {
+    "dataCategoryName": "PM_COUNTERs"
+  },
+  "dataProviderType": {
+    "dataProviderName": "v2"
+  },
+  "notificationTopic": {
+    "encoding": "JSON",
+    "messageBusId": 1,
+    "dataProviderTypeId": 3,
+    "name": "name",
+    "specificationReference": "specRef"
+  },
+  "fileFormat": {
+    "bulkDataRepositoryId": 1,
+    "reportOutputPeriodList": [
+      0
+    ],
+    "dataEncoding": "JSON",
+    "specificationReference": "specRef"
+  },
+  "dataType": {
+    "mediumType": "file",
+    "schemaName": "SCHMNM",
+    "schemaVersion": "2",
+    "isExternal": true,
+    "consumedDataSpace": "5G",
+    "consumedDataCategory": "5G",
+    "consumedDataProvider": "5G",
+    "consumedSchemaName": "5G",
+    "consumedSchemaVersion": "2"
+  }
+}

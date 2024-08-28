@@ -1,0 +1,120 @@
+#
+# COPYRIGHT Ericsson 2022
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+apiVersion: v1
+data:
+  connected_systems_uri: {{ .Values.connected.systems.uri | quote }}
+  connected_systems_availability_retry_interval: {{ .Values.connected.systems.availability.retry_interval | quote }}
+  connected_systems_availability_retry_attempts: {{ .Values.connected.systems.availability.retry_attempts | quote }}
+  subsystem_name: {{ .Values.subsystem.name | quote }}
+  dmm_data_catalog_base_url: {{ .Values.dmm.data_catalog.base_url | quote }}
+  dmm_data_catalog_base_port: {{ .Values.dmm.data_catalog.base_port | quote }}
+  dmm_data_catalog_data_service_uri: {{ .Values.dmm.data_catalog.data_service_uri | quote }}
+  dmm_data_catalog_file_format_uri: {{ .Values.dmm.data_catalog.file_format_uri | quote }}
+  dmm_data_catalog_file_format_uri_v2: {{ .Values.dmm.data_catalog.file_format_uri_v2 | quote }}
+  dmm_data_catalog_message_bus_uri: {{ .Values.dmm.data_catalog.message_bus_uri | quote }}
+  dmm_data_catalog_bulk_data_repository_uri: {{ .Values.dmm.data_catalog.bulk_data_repository_uri | quote }}
+  dmm_data_catalog_message_bus_name: {{ .Values.dmm.data_catalog.message_bus_name | quote }}
+  dmm_data_catalog_message_bus_namespace: {{ default .Release.Namespace | quote }}
+  dmm_data_catalog_availability_retry_interval: {{ .Values.dmm.data_catalog.availability.retry_interval | quote}}
+  dmm_data_catalog_availability_retry_attempts: {{ .Values.dmm.data_catalog.availability.retry_attempts | quote}}
+  dmm_data_catalog_data_service_name_suffix: {{ .Values.dmm.data_catalog.data_service.name_suffix | quote}}
+  dmm_data_catalog_data_service_data_space_name: {{ .Values.dmm.data_catalog.data_service.data_space.name | quote}}
+  dmm_data_catalog_data_service_data_service_instance_control_end_point: {{ .Values.dmm.data_catalog.data_service.data_service_instance.control_end_point | quote}}
+  dmm_data_catalog_data_service_data_service_instance_consumed_data_space: {{ .Values.dmm.data_catalog.data_service.data_service_instance.consumed_data_space | quote}}
+  dmm_data_catalog_data_service_data_service_instance_consumed_data_category: {{ .Values.dmm.data_catalog.data_service.data_service_instance.consumed_data_category | quote}}
+  dmm_data_catalog_data_service_data_service_instance_consumed_schema_name: {{ .Values.dmm.data_catalog.data_service.data_service_instance.consumed_schema_name | quote}}
+  dmm_data_catalog_data_service_data_service_instance_consumed_schema_version: {{ .Values.dmm.data_catalog.data_service.data_service_instance.consumed_schema_version | quote}}
+  dmm_data_catalog_data_service_data_category_name: {{ .Values.dmm.data_catalog.data_service.data_category.name | quote}}
+  dmm_data_catalog_data_service_data_provider_name: {{ .Values.dmm.data_catalog.data_service.data_provider.name | quote}}
+  dmm_data_catalog_data_service_notification_topic_specification_reference: {{ .Values.dmm.data_catalog.data_service.notification_topic.specification_reference | quote}}
+  dmm_data_catalog_data_service_notification_topic_data_encoding: {{ .Values.dmm.data_catalog.data_service.notification_topic.data_encoding | quote}}
+  dmm_data_catalog_data_service_supported_predicate_parameter_passed_to_consumed_service: {{ .Values.dmm.data_catalog.data_service.supported_predicate_parameter.passed_to_consumed_service | quote}}
+  dmm_data_catalog_data_service_supported_predicate_parameter_parameter_name: {{ .Values.dmm.data_catalog.data_service.supported_predicate_parameter.parameter_name | quote}}
+  dmm_data_catalog_data_service_file_format_specification_reference: {{ .Values.dmm.data_catalog.data_service.file_format.specification_reference | quote}}
+  dmm_data_catalog_data_service_file_format_encoding: {{ .Values.dmm.data_catalog.data_service.file_format.encoding | quote}}
+  dmm_data_catalog_data_service_datatype_medium_type: {{ .Values.dmm.data_catalog.data_service.datatype.medium_type | quote}}
+  dmm_data_catalog_data_service_datatype_schema_name: {{ .Values.dmm.data_catalog.data_service.datatype.schema_name | quote}}
+  dmm_data_catalog_data_service_datatype_schema_version: {{ .Values.dmm.data_catalog.data_service.datatype.schema_version | quote}}
+  bdr_secret_name: {{ .Values.bdr.secretname | quote }}
+  bdr_accesskey: {{ .Values.bdr.access_key | quote }}
+  bdr_secretkey: {{ .Values.bdr.secret_key | quote }}
+  bdr_service_account_retry_interval: {{ .Values.bdr.service_account_retry_interval | quote }}
+  bdr_number_of_connection_attempts: {{ .Values.bdr.number_of_connection_attempts | quote }}
+  bdr_retry_interval_ms: {{ .Values.bdr.retry_interval_ms | quote }}
+  bdr_availability_retry_interval: {{ .Values.bdr.availability.retry_interval | quote }}
+  bdr_availability_retry_attempts: {{ .Values.bdr.availability.retry_attempts | quote }}
+  bdr_fileDeleteRate: {{ .Values.bdr.fileDeleteRate | quote }}
+  bdr_fileDeleteInitialDelay: {{ .Values.bdr.fileDeleteInitialDelay | quote }}
+  bdr_filePersistenceDuration: {{ .Values.bdr.filePersistenceDuration | quote }}
+  spring_kafka_transaction_retry_interval_ms: {{ .Values.spring.kafka.transaction.retry_interval_ms | quote }}
+  spring_kafka_transaction_max_retry_attempts: {{ .Values.spring.kafka.transaction.max_retry_attempts | quote }}
+  spring_kafka_topics_input_name: {{ .Values.spring.kafka.topics.input.name | quote }}
+  spring_kafka_topics_output_partitions: {{ .Values.spring.kafka.topics.output.partitions | quote }}
+  spring_kafka_topics_output_replicas: {{ .Values.spring.kafka.topics.output.replicas | quote }}
+  spring_kafka_topics_output_compression: {{ .Values.spring.kafka.topics.output.compression | quote }}
+  spring_kafka_topics_output_retention: {{ .Values.spring.kafka.topics.output.retention | quote }}
+  spring_kafka_topics_output_batch_size: {{ .Values.spring.kafka.topics.output.batch_size | quote }}
+  spring_kafka_topics_output_linger: {{ .Values.spring.kafka.topics.output.linger | quote }}
+  spring_kafka_topics_output_buffer_memory: {{ .Values.spring.kafka.topics.output.buffer_memory | quote }}
+  spring_kafka_topics_consumer_group_id: {{ .Values.spring.kafka.consumer.group_id | quote }}
+  spring_kafka_topics_consumer_auto_offset_reset: {{ .Values.spring.kafka.consumer.auto_offset_reset | quote }}
+  spring_kafka_topics_consumer_partition_assignment_strategy: {{ .Values.spring.kafka.consumer.partition_assignment_strategy | quote }}
+  spring_kafka_topics_consumer_max_poll_records: {{ .Values.spring.kafka.consumer.max_poll_records | quote }}
+  spring_kafka_topics_consumer_session_timeout_ms: {{ .Values.spring.kafka.consumer.session_timeout_ms | quote }}
+  spring_kafka_topics_consumer_max_poll_reconnect_timeout_ms: {{ .Values.spring.kafka.consumer.max_poll_reconnect_timeout_ms | quote }}
+  spring_kafka_topics_consumer_max_poll_interval_ms: {{ .Values.spring.kafka.consumer.max_poll_interval_ms | quote }}
+  spring_kafka_topics_consumer_retry_backoff_ms: {{ .Values.spring.kafka.consumer.retry_backoff_ms | quote }}
+  spring_kafka_topics_consumer_reconnect_backoff_ms: {{ .Values.spring.kafka.consumer.reconnect_backoff_ms | quote }}
+  spring_kafka_topics_consumer_reconnect_backoff_max_ms: {{ .Values.spring.kafka.consumer.reconnect_backoff_max_ms | quote }}
+  spring_kafka_topics_consumer_request_timeout_ms: {{ .Values.spring.kafka.consumer.request_timeout_ms | quote }}
+  spring_kafka_topics_producer_retry_backoff_ms: {{ .Values.spring.kafka.producer.retry_backoff_ms | quote }}
+  spring_kafka_topics_producer_reconnect_backoff_ms: {{ .Values.spring.kafka.producer.reconnect_backoff_ms | quote }}
+  spring_kafka_topics_producer_reconnect_backoff_max_ms: {{ .Values.spring.kafka.producer.reconnect_backoff_max_ms | quote }}
+  spring_kafka_topics_producer_request_timeout_ms: {{ .Values.spring.kafka.producer.request_timeout_ms | quote }}
+  spring_kafka_listener_auto_start: {{ .Values.spring.kafka.auto.start | quote }}
+  spring_kafka_listener_jmx_enabled: {{ .Values.spring.kafka.jmx.enabled | quote }}
+  spring_profile_active: {{ .Values.spring.profiles.active | quote }}
+  spring_kafka_availability_retry_interval: {{ .Values.spring.kafka.availability.retry_interval | quote}}
+  spring_kafka_availability_retry_attempts: {{ .Values.spring.kafka.availability.retry_attempts | quote}}
+  spring_kafka_bootstrap_servers: {{ template "eric-oss-sftp-filetrans.kafkaServiceName" . }}
+  sftp_retries: {{ .Values.sftp.retries | quote }}
+  sftp_file_download_retries: {{ .Values.sftp.file_download_retries | quote }}
+  sftp_file_download_interval_millis: {{ .Values.sftp.file_download_interval_millis | quote }}
+  sftp_session_timeout_in_millis: {{ .Values.sftp.session_timeout_in_millis | quote }}
+  sftp_backoff_period_millis: {{ .Values.sftp.backoff_period_in_millis | quote }}
+  sftp_availability_retry_count_max: {{ .Values.sftp.availability.retryCountMax | quote }}
+  sftp_availability_backoff_time_in_ms: {{ .Values.sftp.availability.backoffTimeInMs | quote }}
+  retryhandler_back_off_period_ms: {{ .Values.retryhandler.back_off_period_ms | quote }}
+  retryhandler_max_num_of_retries: {{ .Values.retryhandler.max_num_of_retries | quote }}
+  server_port: {{ .Values.service.port | quote }}
+  metrics_log_print_interval_mins: {{ .Values.metrics.log.print_interval_mins | quote }}
+
+  application.properties: |
+    management.endpoint.metrics.enabled=true
+    management.endpoints.web.exposure.include=*
+    management.endpoint.prometheus.enabled=true
+    management.metrics.export.prometheus.enabled=true
+    management.metrics.web.server.auto-time-requests=true
+kind: ConfigMap
+metadata:
+  name: {{ include "eric-oss-sftp-filetrans.name" . }}-configmap
+  labels:
+  {{- include "eric-oss-sftp-filetrans.labels" . | nindent 4 }}
+  annotations:
+  {{- include "eric-oss-sftp-filetrans.prometheus" . | nindent 4 }}
+  {{- include "eric-oss-sftp-filetrans.annotations" . | nindent 4 }}
+

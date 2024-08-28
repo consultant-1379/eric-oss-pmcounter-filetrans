@@ -1,0 +1,26 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+productName: "eric-oss-sftp-filetrans HELM"
+productNumber: "CXD 101 395"
+images:
+  eric-oss-sftp-filetrans:
+    productName: "eric-oss-sftp-filetrans IMAGE"
+    productNumber: "CXU 101 1655"
+    registry: "armdocker.rnd.ericsson.se"
+    repoPath: REPO_PATH
+    name: "eric-oss-sftp-filetrans"
+    tag: VERSION

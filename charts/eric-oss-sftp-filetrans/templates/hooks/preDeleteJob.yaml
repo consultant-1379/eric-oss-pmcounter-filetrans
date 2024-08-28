@@ -1,0 +1,87 @@
+#
+# COPYRIGHT Ericsson 2023
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "eric-oss-sftp-filetrans.fullname" . }}-pre-delete-job
+  labels:
+    {{- include "eric-oss-sftp-filetrans.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+    {{- include "eric-oss-sftp-filetrans.annotations" . | nindent 4 }}
+    {{- include "eric-oss-sftp-filetrans.prometheus" . | nindent 4 }}
+spec:
+  backoffLimit: 6
+  template:
+    metadata:
+      annotations:
+        {{- include "eric-oss-sftp-filetrans.service-mesh-inject" . | nindent 8 }}
+        {{- include "eric-oss-sftp-filetrans.service-mesh-version" . | nindent 8 }}
+        {{- include "eric-oss-sftp-filetrans.service-mesh-proxy-config" . | nindent 8 }}
+        {{- include "eric-oss-sftp-filetrans.annotations" . | nindent 8 }}
+      labels:
+        {{- include "eric-oss-sftp-filetrans.service-mesh-inject" . | nindent 8 }}
+        {{- include "eric-oss-sftp-filetrans.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "eric-oss-sftp-filetrans.fullname" . }}
+      restartPolicy: Never
+      securityContext:
+        {{ include "eric-oss-sftp-filetrans.seccomp-profile" . | indent 10 }}
+      imagePullSecrets:
+        - name: {{ include "eric-oss-sftp-filetrans.pullSecret" . | quote}}
+      containers:
+        - name: eric-oss-sftp-pre-delete
+          image: {{ template "eric-oss-sftp-filetrans.mainImagePath" . }}
+          imagePullPolicy: {{ template "eric-oss-sftp-filetrans.registryImagePullPolicy" . }}
+          env:
+            - name: SFTP_SERVICE_NAME
+              value: {{ include "eric-oss-sftp-filetrans.fullname" . }}
+          command: ["/bin/bash","-c"]
+          args:
+            - |
+              deregister_response=$(curl -X DELETE http://${SFTP_SERVICE_NAME}:8080/data-service-instance | jq .) 
+              echo "$deregister_response"                     
+              {{- include "eric-oss-sftp-filetrans.service-mesh-sidecar-quit" .| nindent 14 }}
+              if [[ -z "$deregister_response" ]]; then
+                echo "Unable to reach Service. Exiting with Success"
+                exit 0
+              else
+                exit $(echo $deregister_response | jq ."deregisterStatus")
+              fi
+          resources:
+            requests:
+              cpu: {{ (index .Values "resources" "eric-oss-sftp-filetrans-hooks" "requests" "cpu" | quote) }}
+              memory: {{ (index .Values "resources" "eric-oss-sftp-filetrans-hooks" "requests" "memory" | quote) }}
+              ephemeral-storage: {{ (index .Values "resources" "eric-oss-sftp-filetrans-hooks" "requests" "ephemeral-storage" | quote) }}
+            limits:
+              cpu: {{ (index .Values "resources" "eric-oss-sftp-filetrans-hooks" "limits" "cpu" | quote) }}
+              memory: {{ (index .Values "resources" "eric-oss-sftp-filetrans-hooks" "limits" "memory" | quote) }}
+              ephemeral-storage: {{ (index .Values "resources" "eric-oss-sftp-filetrans-hooks" "limits" "ephemeral-storage" | quote) }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - all
+      priorityClassName: {{ (index .Values "podPriority" "eric-oss-sftp-filetrans" "priorityClassName") }}
+      nodeSelector: {{- include "eric-oss-sftp-filetrans.nodeSelector" . | nindent 6 -}}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+

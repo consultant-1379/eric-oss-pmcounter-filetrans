@@ -1,0 +1,41 @@
+#
+# COPYRIGHT Ericsson 2023
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+{{- $serviceMesh := include "eric-oss-sftp-filetrans.service-mesh-enabled" . | trim -}}
+{{- $tls := include "eric-oss-sftp-filetrans.global-security-tls-enabled" . | trim -}}
+{{- if and (eq $serviceMesh "true") (eq $tls "true") }}
+apiVersion: siptls.sec.ericsson.com/v1
+kind: InternalCertificate
+metadata:
+  name: {{ include "eric-oss-sftp-filetrans.name" . }}-kafka-int-cert
+  labels:
+  {{- include "eric-oss-sftp-filetrans.labels" . | nindent 4 }}
+  annotations:
+  {{- include "eric-oss-sftp-filetrans.annotations" . | nindent 4 }}
+spec:
+  kubernetes:
+    generatedSecretName: {{ include "eric-oss-sftp-filetrans.name" . }}-kafka-secret
+    certificateName: "cert.pem"
+    privateKeyName: "key.pem"
+  certificate:
+    subject:
+      cn: {{ include "eric-oss-sftp-filetrans.name" . }}
+    issuer:
+      reference:   {{ include "eric-oss-sftp-filetrans.kafkaIssuerReference" . }}
+    extendedKeyUsage:
+      tlsClientAuth: true
+      tlsServerAuth: false
+  {{- end }}

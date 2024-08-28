@@ -1,0 +1,102 @@
+# Compiled source #
+*.class
+*/bin/*
+
+# Eclipse files
+.project
+.classpath
+.settings
+.metadata
+
+# IntelliJ IDEA files
+.idea
+*.iws
+*.ipr
+*.iml
+*.patch
+
+# Test output files
+*/test-output/*
+/test-output/
+/test-output
+test-output/
+test-output/**/*
+*/test-output/**/*
+test_results
+
+# Packages
+*.jar
+*.tar.gz
+*.tgz
+*.egg-info
+
+# Maven build files
+target
+reports
+**/dependency-reduced-pom.xml
+
+# PMD
+.pmd
+
+# Merge files
+*.orig
+
+#tmp directories
+tmp/
+test-output/
+
+#BOB Files
+.project_*
+*helm-target
+.factorypath
+
+# Helm Files
+requirements.lock
+charts/*/charts/
+
+# Python files
+__pycache__/
+*.pyc
+
+# venv
+venv/
+
+# deployment manager build files
+deployment_manager/build
+
+# dev test results
+dev/results/
+
+# temporary files created in the functional tests
+testsuite/deployment-manager-functional-tests/tmp/
+testsuite/deployment-manager-functional-tests/certificates/
+
+# Helm files
+Chart.lock
+**/HELP.md
+**/target/
+!**/.mvn/wrapper/maven-wrapper.jar
+### IntelliJ IDEA ###
+**/.idea
+**/*.iws
+**/*.iml
+**/*.ipr
+**/.classpath
+**/.project
+**/.settings
+**/.factorypath
+### VS Code ###
+.vscode/
+### BOB Temporary Files/Folders ###
+**/.bob.env
+**/.bob/
+**/.bob*/
+**/k8s-logs/
+**/build
+### SonarQube Working Directory ###
+**/?/
+### Spinnaker Temporary Properties ###
+**/artifact.properties
+### Generate Docs Artifacts ###
+**/*.zip
+/bin/

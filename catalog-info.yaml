@@ -1,0 +1,62 @@
+#
+# COPYRIGHT Ericsson 2024
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: eric-oss-sftp-filetrans
+  title: SFTP File Transfer
+  description: The SFTP File Transfer Service receives Kafka notifications produced by the ENM File Notification Service (FNS). SFTP's the files as an input stream and persists to the Bulk Data Repository (BDR). The messages containing the location of the files in BDR are written onto a Kafka output topic to be consumed by other services.
+  annotations:
+    backstage.io/source-location: url:https://gerrit-gamma.gic.ericsson.se/plugins/gitiles/OSS/com.ericsson.oss.adc/eric-oss-pmcounter-filetrans
+    backstage.io/kubernetes-label-selector: 'app.kubernetes.io/name=eric-oss-sftp-filetrans'
+    gerrit/component: OSS/com.ericsson.oss.adc/eric-oss-pmcounter-filetrans
+    sonarqube.org/project-key: com.ericsson.oss.adc:eric-oss-pmcounter-filetrans
+    jira.com/project-keys: IDUN
+    jira.com/filter-ids: "224950"
+    jenkins:
+      fem1s11-eiffel216.eiffel.gic.ericsson.se:8443/eric-oss-pmcounter-filetrans_PreCodeReview,
+      fem1s11-eiffel216.eiffel.gic.ericsson.se:8443/eric-oss-pmcounter-filetrans_Publish
+    spinnaker.io/application-name: adc-e2e-cicd
+    spinnaker.io/pipelines: eric-oss-pmcounter-filetrans-E2E-Flow
+  links:
+    - url: https://mimer.internal.ericsson.com/productPage?activeView=productDetails&productNumber=APR201535
+      title: Mimer
+      icon: dashboard
+    - url: https://eteamspace.internal.ericsson.com/display/IDUN/Team+Augurey
+      title: Team Auguery Confluence
+      icon: dashboard
+    - url: https://adp.ericsson.se/marketplace/sftp-file-transfer
+      title: ADP
+      icon: dashboard
+  tags:
+    - ericsson-intelligent-controller
+  roles:
+    scrum-master: elasabn
+    product-owner: ebhtnkt
+    ci-spoc: ehjormu
+    test-expert: EEIMKR
+    microservice-architect: ehuskan
+    security-master: EPAOFRA
+    line-manager: EEIKONL
+  approval:
+    date: 22-02-2024
+    approver: ehuskan
+spec:
+  system: eric-oss-adc
+  lifecycle: production
+  owner: augurey-mandl
+  type: microservice

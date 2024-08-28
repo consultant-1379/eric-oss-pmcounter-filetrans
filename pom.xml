@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ ~ COPYRIGHT Ericsson 2021
+ ~
+ ~
+ ~
+ ~ The copyright to the computer program(s) herein is the property of
+ ~
+ ~ Ericsson Inc. The programs may be used and/or copied only with written
+ ~
+ ~ permission from Ericsson Inc. or in accordance with the terms and
+ ~
+ ~ conditions stipulated in the agreement/contract under which the
+ ~
+ ~ program(s) have been supplied.
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.2.5</version>
+    <!-- 202/CAX1058168 -->
+    <relativePath/>
+  </parent>
+  <groupId>com.ericsson.oss.adc</groupId>
+  <artifactId>eric-oss-sftp-filetrans</artifactId>
+  <version>1.199.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+  <name>eric-oss-sftp-filetrans</name>
+  <scm>
+    <developerConnection>${ericsson.scm.url}</developerConnection>
+    <connection>${ericsson.scm.url}</connection>
+    <tag>HEAD</tag>
+  </scm>
+
+  <properties>
+    <!-- Set compiler Java version, MUST match the Dockerfile JDK version -->
+    <java.version>17</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <ericsson.scm.url>
+      scm:git:[fetch=]ssh://gerrit-gamma.gic.ericsson.se:29418/OSS/com.ericsson.oss.adc/eric-oss-pmcounter-filetrans[push=]ssh://gerrit-gamma.gic.ericsson.se:29418/OSS/com.ericsson.oss.adc/eric-oss-pmcounter-filetrans
+    </ericsson.scm.url>
+    <snakeyaml.version>2.0</snakeyaml.version>
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=1039571&category= -->
+    <version.tomcat-embed-el>10.1.10</version.tomcat-embed-el>
+    <!-- For CVE-2021-42340 against tomcat-embed-el Can be removed when spring-boot-starter >=2.5.8 or >=2.6.2 is used -->
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=1049747&category= -->
+    <version.h2>2.2.220</version.h2> <!-- 31/CAX1054380 -->
+    <version.jackson-databind-nullable>0.2.6</version.jackson-databind-nullable>
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=1041288 -->
+    <version.jaeger-client>1.6.0</version.jaeger-client>
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=985646 -->
+    <version.logstash-logback-encoder>7.0.1</version.logstash-logback-encoder>
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=999632&category= -->
+    <version.lombok>1.18.24</version.lombok>
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=1007979 -->
+    <version.micrometer>1.11.0</version.micrometer>
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=1046736&category= -->
+    <version.spring-cloud>2023.0.1</version.spring-cloud>
+    <!-- 31/CTX1020469 -->
+    <version.swagger-core>2.2.9</version.swagger-core>
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=1041440 -->
+    <version-jackson-databind>2.15.2</version-jackson-databind>
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=1047964&category= -->
+    <version-jackson-core>2.15.2</version-jackson-core>
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=1047966&category= -->
+    <version-jackson-annotations>2.15.2</version-jackson-annotations>
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=1047963&category= -->
+    <version-minio>8.5.10</version-minio> <!-- 2/CTX1040356 -->
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=1063931&category= -->
+      <version-okhttp>4.12.0</version-okhttp>
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=1016523 -->
+    <version-commons>2.11.0</version-commons>
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=979118&category= -->
+    <version.spring-integration-sftp>5.5.17</version.spring-integration-sftp>
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=1042720&category= -->
+    <version.common-collections>3.2.2</version.common-collections>
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=950222 -->
+    <version.mockito-core>5.4.0</version.mockito-core>
+    <!-- https://bazaar.internal.ericsson.com/b-view-component.php?componentid=1049522&category= -->
+    <version.jsch>0.2.11</version.jsch>
+    <!-- https://scas.internal.ericsson.com/search3pp?compProdNumber=7%2FCTX1033027&compProdNumber-filter=contains -->
+    <!-- Ericsson Dependency Versions -->
+    <version.eric-common-logging>2.0.7</version.eric-common-logging>
+    <version.enm-checkstyle-module>1.1.103</version.enm-checkstyle-module>
+    <version.spring-kafka>3.0.13</version.spring-kafka>  <!-- 81/CTX1020156   -->
+
+    <!-- Build Dependencies -->
+    <version.maven-sortpom-plugin>2.13.1</version.maven-sortpom-plugin>
+    <version.maven-release-plugin>2.4.2</version.maven-release-plugin>
+    <version.maven-scm-provider-gitexe>1.8.1</version.maven-scm-provider-gitexe>
+
+    <!-- Test Dependencies -->
+    <fake-sftp-server-lambda>2.0.0</fake-sftp-server-lambda>
+
+    <!-- Test Container support -->
+    <version.testcontainers>1.17.6</version.testcontainers>
+    <version-awaitility>4.2.0</version-awaitility>
+    <version.license-maven-plugin>3.0</version.license-maven-plugin>
+    <version.sonar-maven-plugin>3.8.0.2131</version.sonar-maven-plugin>
+    <!-- JaCoCo plugin for Java Code Coverage -->
+    <version.jcoco-maven.plugin>0.8.8</version.jcoco-maven.plugin>
+    <!-- Minimum ratio or percentage of instructions to be covered, used by
+            JaCoCo plugin. Industry standard is 0.8 or 80% which allows at least 80%
+            of the code to be covered by the test cases. -->
+    <jacoco-maven-plugin.coveredratio.minimum>0.5</jacoco-maven-plugin.coveredratio.minimum>
+    <sonar.exclusions>
+      **/*Model.java,
+    </sonar.exclusions>
+    <sonar.coverage.exclusions> <!-- Will be covered by Fully-integrated SpringBoot tests -->
+      **/RestTemplateFacade.java
+    </sonar.coverage.exclusions>
+    <sonar.projectKey>com.ericsson.oss.adc:eric-oss-pmcounter-filetrans</sonar.projectKey>
+
+    <sonar.language>java</sonar.language>
+    <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+    <sonar.sources>src/main</sonar.sources>
+    <!-- NOT SUPPORTED ANY MORE: sonar.jacoco.reportPath>${project.build.directory}/jacoco.exec</sonar.jacoco.reportPath -->
+    <sonar.java.binaries>${project.build.directory}/classes</sonar.java.binaries>
+    <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml
+    </sonar.coverage.jacoco.xmlReportPaths>
+
+    <junit.local.version>4.13.2</junit.local.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>${version.spring-cloud}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-checkstyle-plugin -->
+    </dependencies>
+  </dependencyManagement>
+
+
+  <dependencies>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>${version.h2}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openapitools</groupId>
+      <artifactId>jackson-databind-nullable</artifactId>
+      <version>${version.jackson-databind-nullable}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>io.jaegertracing</groupId>
+      <artifactId>jaeger-client</artifactId>
+      <version>${version.jaeger-client}</version>
+    </dependency>
+    <dependency>
+      <groupId>net.logstash.logback</groupId>
+      <artifactId>logstash-logback-encoder</artifactId>
+      <version>${version.logstash-logback-encoder}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${version.lombok}</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-core</artifactId>
+      <version>${version.micrometer}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+      <version>${version.micrometer}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tomcat.embed</groupId>
+      <artifactId>tomcat-embed-el</artifactId>
+      <version>${version.tomcat-embed-el}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-jaxrs2-servlet-initializer</artifactId>
+      <version>${version.swagger-core}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${version-jackson-databind}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>${version-jackson-core}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>${version-jackson-annotations}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.minio</groupId>
+      <artifactId>minio</artifactId>
+      <version>${version-minio}</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>okhttp</artifactId>
+          <groupId>com.squareup.okhttp3</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>${version-okhttp}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.integration</groupId>
+      <artifactId>spring-integration-sftp</artifactId>
+      <version>${version.spring-integration-sftp}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-io</groupId>
+          <artifactId>commons-io</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.kafka</groupId>
+      <artifactId>spring-kafka</artifactId>
+      <version>${version.spring-kafka}</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>${version-commons}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-bootstrap</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.mwiede</groupId>
+      <artifactId>jsch</artifactId>
+      <version>${version.jsch}</version>
+    </dependency>
+    <!-- Ericsson Dependencies -->
+    <dependency>
+      <groupId>com.ericsson.oss.orchestration.eo</groupId>
+      <artifactId>eric-common-logging</artifactId>
+      <version>${version.eric-common-logging}</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- Spring Retry dependencies -->
+    <dependency>
+      <groupId>org.springframework.retry</groupId>
+      <artifactId>spring-retry</artifactId>
+    </dependency>
+
+    <!-- Test Dependencies -->
+    <dependency>
+      <groupId>commons-collections</groupId>
+      <artifactId>commons-collections</artifactId>
+      <version>${version.common-collections}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-contract-stub-runner</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-contract-verifier</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.stefanbirkner</groupId>
+      <artifactId>fake-sftp-server-lambda</artifactId>
+      <version>${fake-sftp-server-lambda}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.kafka</groupId>
+      <artifactId>spring-kafka-test</artifactId>
+      <version>${version.spring-kafka}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${version.mockito-core}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${junit.local.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>${version.testcontainers}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${version.testcontainers}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <version>${version-awaitility}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.0.0-M5</version>
+        <configuration>
+          <!--   using the defaults, useSystemClassLoader=true and useManifestOnlyJar=false
+                 Ref: https://maven.apache.org/surefire/maven-surefire-plugin/examples/class-loading.html
+          -->
+          <!-- You can use the following command to see the stack trace on console instead of report files in the target/surefire-reports folder
+           -->
+          <useFile>false</useFile>
+          <includes>
+            <include>**/*Test.java</include>
+          </includes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- JaCoCo plugin for Java Code Coverage -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${version.jcoco-maven.plugin}</version>
+        <configuration>
+          <append>true</append>
+
+          <!-- Default location is 'target/site/jacoco/index.html' PCR jenkin Job looking for it there. -->
+          <outputDirectory>${project.build.directory}/site/jacoco</outputDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <id>jacoco-check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>test</phase>
+            <!-- JaCoCo uses a set of different counters to calculate coverage
+                            metrics -->
+            <!-- Check configuration used to specify rules on element types (BUNDLE,
+                            PACKAGE, CLASS, SOURCEFILE or METHOD) with a list of limits. Each limit applies
+                            to a certain counter (INSTRUCTION, LINE, BRANCH, COMPLEXITY, METHOD, CLASS)
+                            and defines a minimum or maximum for the corresponding value (TOTALCOUNT,
+                            COVEREDCOUNT, MISSEDCOUNT, COVEREDRATIO, MISSEDRATIO). A limit ratio may
+                            optionally be declared as a percentage where 0.80 and 80% represent the same
+                            value, the value must end with %. -->
+            <configuration>
+              <rules>
+                <rule implementation="org.jacoco.maven.RuleConfiguration">
+                  <element>BUNDLE</element>
+                  <limits>
+                    <limit implementation="org.jacoco.report.check.Limit">
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>${jacoco-maven-plugin.coveredratio.minimum}</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+            </configuration>
+          </execution>
+          <execution>
+            <id>agent-for-ut</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>agent-for-it</id>
+            <goals>
+              <goal>prepare-agent-integration</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>jacoco-site</id>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <phase>verify</phase>
+          </execution>
+        </executions>
+
+      </plugin>
+      <!-- JaCoCo plugin for Java Code Coverage -->
+    </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <version>${version.license-maven-plugin}</version>
+          <configuration>
+            <header>license/copyright-2023.txt</header>
+            <validHeaders>
+              <validHeader>license/copyright-2020.txt</validHeader>
+              <validHeader>license/copyright-2021.txt</validHeader>
+              <validHeader>license/copyright-2022.txt</validHeader>
+              <validHeader>license/copyright-2023.txt</validHeader>
+              <validHeader>license/copyright-2024.txt</validHeader>
+            </validHeaders>
+            <excludes>
+              <exclude>bob/*</exclude>
+              <exclude>bob*/</exclude>
+              <exclude>.bob/*</exclude>
+              <exclude>.bob*/</exclude>
+              <exclude>doc/*</exclude>
+              <exclude>doc*/</exclude>
+              <exclude>k8s-logs/*</exclude>
+              <exclude>**/.helmignore</exclude>
+              <exclude>**/*.html</exclude>
+              <exclude>**/_helpers.tpl</exclude>
+              <exclude>**/*.tgz</exclude>
+              <exclude>**/VERSION*</exclude>
+              <exclude>**/*.repo</exclude>
+              <exclude>license/copyright*</exclude>
+              <exclude>design-rule-check-report*</exclude>
+              <exclude>helm-install-dry-run.log</exclude>
+              <exclude>*artifact.properties</exclude>
+              <exclude>settings.xml</exclude>
+              <exclude>ci/**</exclude>
+              <exclude>fossa/**</exclude>
+            </excludes>
+            <headerDefinitions>
+              <headerDefinition>./license/javaHeaderDefinition.xml</headerDefinition>
+              <headerDefinition>./license/xmlHeaderDefinition.xml</headerDefinition>
+            </headerDefinitions>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.sonarsource.scanner.maven</groupId>
+          <artifactId>sonar-maven-plugin</artifactId>
+          <version>${version.sonar-maven-plugin}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>snapshot</id>
+      <name>armseligic-snapshot</name>
+      <url>https://arm.seli.gic.ericsson.se/artifactory/proj-eric-oss-dev-local</url>
+    </snapshotRepository>
+    <repository>
+      <id>release</id>
+      <name>armseligic-release</name>
+      <url>https://arm.seli.gic.ericsson.se/artifactory/proj-eric-oss-release-local</url>
+    </repository>
+  </distributionManagement>
+
+</project>

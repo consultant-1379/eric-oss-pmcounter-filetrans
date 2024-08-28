@@ -1,0 +1,32 @@
+#
+# COPYRIGHT Ericsson 2023
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+apiVersion: v1
+data:
+  logcontrol.json: |-
+    [
+      {
+        "container": "{{ include "eric-oss-sftp-filetrans.name" . }}",
+        "severity": {{ .Values.log.logLevel | quote }}
+      }
+    ]
+kind: ConfigMap
+metadata:
+  name: {{ include "eric-oss-sftp-filetrans.log-control-configmap.name" . }}
+  labels:
+    {{- include "eric-oss-sftp-filetrans.labels" . | nindent 4 }}
+  annotations:
+    {{- include "eric-oss-sftp-filetrans.annotations" . | nindent 4 }}

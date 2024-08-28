@@ -1,0 +1,41 @@
+[
+  {
+    "id":"2",
+    "subsystemTypeId":"5",
+    "name":"enm1",
+    "url":"https://test.subsystem-2/",
+    "operationalState": "REACHABLE",
+    "connectionProperties":[
+      {
+        "id":5,
+        "subsystemId":2,
+        "name":"localhost",
+        "tenant":"tenant1",
+        "username":"user",
+        "password":"password",
+        "scriptingVMs":"localhost,localhost,localhost",
+        "sftpPort": "1234",
+        "subsystemUsers":[
+          {
+            "id":4,
+            "connectionPropsId":3
+          },
+          {
+            "id":15,
+            "connectionPropsId":3
+          },
+          {
+            "id":2,
+            "connectionPropsId":3
+          }
+        ]
+      }
+    ],
+    "vendor":"Ericsson",
+    "subsystemType":{
+      "id":5,
+      "type":"PhysicalDevice"
+    },
+    "adapterLink":"eric-eo-ecm-adapter"
+  }
+]

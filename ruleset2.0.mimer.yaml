@@ -1,0 +1,70 @@
+#
+# COPYRIGHT Ericsson 2022
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+modelVersion: 2.0
+description: "Ericsson Java Spring Boot This microservice will fetch files and transfer to Object store (BDR)"
+# See image catalog: https://confluence.lmera.ericsson.se/display/ACD/ADP+CICD+Docker+Image+Catalog
+docker-images:
+  - adp-release-auto: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/bob-adp-release-auto:${env.RELEASE_AUTO_TAG}
+import:
+  common: common-properties.yaml
+# List of constants
+properties:
+  # Functional ID for your Team or CI group to push to Gerrit repo
+  - git-user: ossadmin
+  - git-clone-url: https://gerrit-gamma.gic.ericsson.se/${common.git-repo-path}.git
+
+# Import environment variables (For example: Jenkins parameters)
+env:
+  - HOME
+  - PWD
+  - DEBUG (default=false)
+  # Credentials
+  - GERRIT_USERNAME (default=${git-user})
+  - GERRIT_PASSWORD
+  - MUNIN_TOKEN
+  # Default docker image tags
+  - RELEASE_AUTO_TAG (default=latest)
+  # mimer
+  - RELEASE_CANDIDATE (default=${var.version})
+  - MUNIN_DRY_RUN (default=false)
+
+# Variables, set by below tasks
+var:
+  - version
+  - semver
+  - release-plus-version
+  - released-version
+  - released-version-without-build-number
+
+# Rules to execute
+rules:
+  # Generates the released version based on environment variable MUNIN_RELEASE_CANDIDATE
+  # Generates adp artifacts properties
+  mimer-init:
+    - task: generate-released-versions
+      cmd:
+        - echo ${env.RELEASE_CANDIDATE} | sed s/-/+/ > .bob/var.release-plus-version
+        - echo ${env.RELEASE_CANDIDATE} | cut -d '-' -f 1 > .bob/var.released-version-without-build-number
+        - echo ${env.RELEASE_CANDIDATE} > .bob/var.released-version
+        - cat .bob/var.released-version-without-build-number > .bob/var.semver
+
+  # Create product versions from product structure and FOSS dependencies
+  munin-update-version:
+    - task: create-products
+      docker-image: adp-release-auto
+      cmd: munin create-versions -t $(<"${env.MUNIN_TOKEN}") -c plms/product_structure.yaml -v ${env.RELEASE_CANDIDATE}  --debug ${env.DEBUG}
+
